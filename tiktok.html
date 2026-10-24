@@ -1347,7 +1347,7 @@ svg { display: block; }
       if (err.name === 'AbortError') return; // Nutzer hat abgebrochen
     }
     if (!shared) {
-      const payload = v.blob ? text : `${text}\n${v.sources[0]}`;
+      const payload = v.blob || !/^https?:/.test(v.sources[0]) ? text : `${text}\n${v.sources[0]}`;
       shared = await copyText(payload);
       toast(shared ? 'In die Zwischenablage kopiert' : 'Teilen nicht möglich');
     }
