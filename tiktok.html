@@ -7,380 +7,376 @@
 <meta name="color-scheme" content="dark">
 <title>ClipFeed</title>
 <style>
-/* =========================================================
-   DESIGN TOKENS
-   ========================================================= */
+/* Layout: eine 9:16-Spalte (mobil Vollbild), Feed + überlagernde Seiten + Bottom-Sheets */
 :root {
   --bg: #000;
-  --surface: #121212;
-  --surface-2: #1e1e1e;
-  --surface-3: #2a2a2a;
+  --page: #0b0b0d;
+  --surface: #141416;
+  --surface-2: #1f1f23;
+  --surface-3: #2c2c31;
   --text: #fff;
-  --text-dim: rgba(255, 255, 255, .72);
+  --text-dim: rgba(255, 255, 255, .74);
   --text-mute: rgba(255, 255, 255, .5);
   --accent: #fe2c55;
   --accent-2: #25f4ee;
-  --like: #fe2c55;
-  --border: rgba(255, 255, 255, .12);
-  --nav-h: 56px;
+  --gold: #ffc23d;
+  --border: rgba(255, 255, 255, .1);
+  --nav-h: 54px;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
-  --app-h: 100vh;
+  --vh: 100vh;
   --ease: cubic-bezier(.2, .8, .2, 1);
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: dark;
 }
-@supports (height: 100dvh) { :root { --app-h: 100dvh; } }
+@supports (height: 100dvh) { :root { --vh: 100dvh; } }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow: hidden; -webkit-font-smoothing: antialiased; }
 body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
 input, textarea { font: inherit; color: inherit; }
 svg { display: block; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* =========================================================
-   APP SHELL (Mobile: Vollbild, Desktop: zentrierte 9:16-Spalte)
-   ========================================================= */
-.backdrop-blur {
+/* ================= Hintergrund + App-Spalte ================= */
+.backdrop {
   position: fixed; inset: 0; z-index: 0;
-  background: radial-gradient(1200px 800px at 20% 10%, rgba(254, 44, 85, .18), transparent 60%),
-              radial-gradient(1000px 700px at 80% 90%, rgba(37, 244, 238, .14), transparent 60%), #000;
+  background: radial-gradient(1100px 760px at 18% 8%, rgba(254, 44, 85, .16), transparent 60%),
+              radial-gradient(1000px 700px at 82% 92%, rgba(37, 244, 238, .12), transparent 60%), var(--bg);
 }
 .app {
-  position: relative; z-index: 1;
-  height: var(--app-h); width: 100%;
-  margin: 0 auto; display: flex; flex-direction: column;
-  background: #000; overflow: hidden;
+  position: relative; z-index: 1; height: 100%; width: 100%; margin: 0 auto;
+  display: flex; flex-direction: column; background: var(--bg); overflow: hidden;
 }
 @media (min-width: 700px) {
-  .app {
-    width: min(100vw, calc((var(--app-h) - var(--nav-h)) * 9 / 16));
-    box-shadow: 0 0 0 1px var(--border), 0 30px 80px rgba(0, 0, 0, .6);
-  }
+  .app { width: min(100vw, calc((var(--vh) - var(--nav-h)) * 9 / 16)); box-shadow: 0 0 0 1px var(--border), 0 30px 80px rgba(0,0,0,.6); }
 }
 
-/* Topbar */
+/* ================= Splash ================= */
+.splash {
+  position: fixed; inset: 0; z-index: 500; background: var(--bg);
+  display: grid; place-items: center; transition: opacity .45s ease, visibility 0s .45s;
+}
+.splash.gone { opacity: 0; visibility: hidden; }
+.splash-logo { display: flex; flex-direction: column; align-items: center; gap: 14px; font-weight: 800; font-size: 26px; letter-spacing: -.5px; }
+.logo-mark { position: relative; width: 58px; height: 58px; }
+.logo-mark span { position: absolute; inset: 0; border-radius: 16px; }
+.logo-mark span:nth-child(1) { background: var(--accent-2); transform: translate(-4px, -3px); animation: wob 1.2s var(--ease) infinite alternate; }
+.logo-mark span:nth-child(2) { background: var(--accent); transform: translate(4px, 3px); animation: wob 1.2s var(--ease) infinite alternate-reverse; }
+.logo-mark span:nth-child(3) { background: #fff; display: grid; place-items: center; color: #000; }
+.logo-mark svg { width: 28px; height: 28px; }
+@keyframes wob { to { transform: translate(0, 0); } }
+
+/* ================= Topbar ================= */
 .topbar {
   position: absolute; top: 0; left: 0; right: 0; z-index: 20;
-  padding: calc(10px + var(--safe-t)) 14px 10px;
-  display: flex; align-items: center; justify-content: space-between;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, .55), transparent);
+  padding: calc(8px + var(--safe-t)) 8px 8px;
+  display: grid; grid-template-columns: 44px 1fr 44px; align-items: center;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, .5), transparent);
   pointer-events: none;
 }
 .topbar > * { pointer-events: auto; }
-.brand { font-weight: 800; letter-spacing: -.3px; font-size: 18px; display: flex; align-items: center; gap: 6px; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
-.brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: -3px 0 0 var(--accent-2); }
-.tabs { display: flex; gap: 18px; font-weight: 700; font-size: 16px; }
+.tabs { justify-self: center; display: flex; gap: 20px; font-weight: 700; font-size: 16.5px; }
 .tab { color: var(--text-mute); position: relative; padding: 4px 0; transition: color .2s; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
 .tab.active { color: var(--text); }
-.tab.active::after { content: ""; position: absolute; left: 50%; bottom: -3px; width: 24px; height: 3px; border-radius: 2px; background: #fff; transform: translateX(-50%); }
-.icon-btn { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; transition: background .2s, transform .15s; }
+.tab.active::after { content: ""; position: absolute; left: 50%; bottom: -4px; width: 26px; height: 3px; border-radius: 2px; background: #fff; transform: translateX(-50%); }
+.list-title { justify-self: center; font-weight: 700; font-size: 16px; text-shadow: 0 1px 4px rgba(0,0,0,.5); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icon-btn { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; transition: background .2s, transform .15s; }
 .icon-btn:hover { background: rgba(255, 255, 255, .1); }
 .icon-btn:active { transform: scale(.9); }
-.icon-btn svg { width: 24px; height: 24px; filter: drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
+.icon-btn svg { width: 25px; height: 25px; filter: drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
 
-/* =========================================================
-   FEED (Snap-Scrolling)
-   ========================================================= */
+.unmute-pill {
+  position: absolute; left: 50%; top: calc(62px + var(--safe-t)); z-index: 21; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 20px;
+  background: rgba(0, 0, 0, .55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  font-size: 13px; font-weight: 700; white-space: nowrap; animation: pillin .5s var(--ease);
+}
+.unmute-pill svg { width: 17px; height: 17px; }
+@keyframes pillin { from { opacity: 0; transform: translate(-50%, -8px); } }
+
+/* ================= Feed ================= */
 .feed {
-  flex: 1; min-height: 0;
-  overflow-y: auto; overflow-x: hidden;
-  scroll-snap-type: y mandatory;
-  scrollbar-width: none;
-  overscroll-behavior-y: contain;
+  flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  scroll-snap-type: y mandatory; scrollbar-width: none; overscroll-behavior-y: contain;
 }
 .feed::-webkit-scrollbar { display: none; }
-.slide {
-  position: relative; height: 100%; width: 100%;
-  scroll-snap-align: start; scroll-snap-stop: always;
-  overflow: hidden; background: #000;
-  contain: strict;
-}
-.slide video {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; background: #000;
-}
+.slide { position: relative; height: 100%; width: 100%; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; background: #000; contain: strict; }
+.slide video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; }
 .slide.fit-contain video { object-fit: contain; }
 .tap-layer { position: absolute; inset: 0; z-index: 2; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.shade {
-  position: absolute; inset: auto 0 0 0; height: 45%; z-index: 3; pointer-events: none;
-  background: linear-gradient(to top, rgba(0, 0, 0, .7), rgba(0, 0, 0, .25) 55%, transparent);
-}
+.shade-b { position: absolute; inset: auto 0 0 0; height: 42%; z-index: 3; pointer-events: none; background: linear-gradient(to top, rgba(0,0,0,.65), rgba(0,0,0,.2) 55%, transparent); }
 
-/* Lade- und Fehlerzustand */
-.spinner {
-  position: absolute; left: 50%; top: 50%; z-index: 4; width: 44px; height: 44px; margin: -22px 0 0 -22px;
-  pointer-events: none; opacity: 0; transition: opacity .2s;
-}
-.spinner::before, .spinner::after {
-  content: ""; position: absolute; top: 50%; width: 16px; height: 16px; margin-top: -8px; border-radius: 50%;
-  animation: orbit 1s var(--ease) infinite;
-}
-.spinner::before { left: 4px; background: var(--accent-2); }
-.spinner::after { right: 4px; background: var(--accent); animation-delay: -.5s; }
+.spinner { position: absolute; left: 50%; top: 50%; z-index: 4; width: 44px; height: 44px; margin: -22px 0 0 -22px; pointer-events: none; opacity: 0; transition: opacity .2s .25s; }
+.spinner::before, .spinner::after { content: ""; position: absolute; top: 50%; width: 15px; height: 15px; margin-top: -7.5px; border-radius: 50%; animation: orbit 1s var(--ease) infinite; }
+.spinner::before { left: 5px; background: var(--accent-2); --dx: 12px; }
+.spinner::after { right: 5px; background: var(--accent); animation-delay: -.5s; --dx: -12px; }
 .slide.loading .spinner { opacity: 1; }
-@keyframes orbit { 0%, 100% { transform: translateX(0) scale(1); } 50% { transform: translateX(var(--dx, 12px)) scale(.7); } }
-.spinner::after { --dx: -12px; }
+@keyframes orbit { 0%, 100% { transform: translateX(0) scale(1); } 50% { transform: translateX(var(--dx)) scale(.7); } }
 
-.error-box {
-  position: absolute; inset: 0; z-index: 4; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-  text-align: center; padding: 24px; color: var(--text-dim); font-size: 14px; pointer-events: none;
-}
+.error-box { position: absolute; inset: 0; z-index: 4; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 24px; color: var(--text-dim); font-size: 14px; pointer-events: none; }
 .error-box svg { width: 48px; height: 48px; opacity: .7; }
 .slide.error .error-box { display: flex; }
 .slide.error .spinner { opacity: 0; }
 
-/* Zentrales Feedback (Mute / Pause) */
-.center-flash {
-  position: absolute; left: 50%; top: 50%; z-index: 5; width: 76px; height: 76px; margin: -38px 0 0 -38px;
-  border-radius: 50%; background: rgba(0, 0, 0, .45); display: grid; place-items: center;
-  opacity: 0; transform: scale(.6); pointer-events: none;
-}
+.center-flash { position: absolute; left: 50%; top: 50%; z-index: 5; width: 76px; height: 76px; margin: -38px 0 0 -38px; border-radius: 50%; background: rgba(0,0,0,.45); display: grid; place-items: center; opacity: 0; pointer-events: none; }
 .center-flash svg { width: 38px; height: 38px; }
 .center-flash.show { animation: flash .7s var(--ease) forwards; }
-@keyframes flash { 0% { opacity: 0; transform: scale(.6); } 20% { opacity: 1; transform: scale(1); } 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.15); } }
-.paused-badge {
-  position: absolute; left: 50%; top: 50%; z-index: 5; width: 70px; height: 70px; margin: -35px 0 0 -35px;
-  display: grid; place-items: center; opacity: 0; transform: scale(1.3); transition: opacity .2s, transform .2s var(--ease); pointer-events: none;
-}
-.paused-badge svg { width: 64px; height: 64px; opacity: .85; filter: drop-shadow(0 2px 8px rgba(0,0,0,.5)); }
+@keyframes flash { 0% { opacity: 0; transform: scale(.6); } 20%, 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.15); } }
+.paused-badge { position: absolute; left: 50%; top: 50%; z-index: 5; width: 80px; height: 80px; margin: -40px 0 0 -40px; display: grid; place-items: center; opacity: 0; transform: scale(1.4); transition: opacity .2s, transform .25s var(--ease); pointer-events: none; }
+.paused-badge svg { width: 70px; height: 70px; opacity: .8; filter: drop-shadow(0 2px 10px rgba(0,0,0,.5)); }
 .slide.paused .paused-badge { opacity: 1; transform: scale(1); }
 
-/* Doppeltipp-Herzen */
-.burst {
-  position: absolute; z-index: 6; width: 96px; height: 96px; margin: -48px 0 0 -48px; pointer-events: none;
-  animation: burst .9s var(--ease) forwards;
-}
-.burst { color: var(--like); }
-.burst svg { width: 100%; height: 100%; filter: drop-shadow(0 4px 12px rgba(254, 44, 85, .5)); }
+.speed-pill { position: absolute; left: 12px; top: calc(64px + var(--safe-t)); z-index: 6; padding: 3px 9px; border-radius: 6px; background: rgba(0,0,0,.5); font-size: 12px; font-weight: 800; pointer-events: none; }
+
+.burst { position: absolute; z-index: 6; width: 100px; height: 100px; margin: -50px 0 0 -50px; pointer-events: none; color: var(--accent); animation: burst .9s var(--ease) forwards; }
+.burst svg { width: 100%; height: 100%; filter: drop-shadow(0 4px 14px rgba(254,44,85,.5)); }
 @keyframes burst {
-  0% { opacity: 0; transform: scale(.3) rotate(var(--r, 0deg)); }
-  15% { opacity: 1; transform: scale(1.2) rotate(var(--r, 0deg)); }
-  30% { transform: scale(.95) rotate(var(--r, 0deg)); }
-  70% { opacity: 1; transform: scale(1) translateY(-10px) rotate(var(--r, 0deg)); }
-  100% { opacity: 0; transform: scale(1.4) translateY(-80px) rotate(var(--r, 0deg)); }
+  0% { opacity: 0; transform: scale(.3) rotate(var(--r)); }
+  15% { opacity: 1; transform: scale(1.2) rotate(var(--r)); }
+  30% { transform: scale(.95) rotate(var(--r)); }
+  70% { opacity: 1; transform: scale(1) translateY(-10px) rotate(var(--r)); }
+  100% { opacity: 0; transform: scale(1.4) translateY(-90px) rotate(var(--r)); }
 }
 
-/* =========================================================
-   OVERLAY RECHTS (Aktionen)
-   ========================================================= */
-.actions {
-  position: absolute; right: 8px; bottom: 18px; z-index: 7;
-  display: flex; flex-direction: column; align-items: center; gap: 16px;
-}
-.avatar-wrap { position: relative; margin-bottom: 8px; }
-.avatar {
-  width: 48px; height: 48px; border-radius: 50%; border: 2px solid #fff;
-  display: grid; place-items: center; font-weight: 800; font-size: 18px; text-transform: uppercase;
-  box-shadow: 0 2px 8px rgba(0,0,0,.4);
-}
-.follow-btn {
-  position: absolute; left: 50%; bottom: -10px; width: 22px; height: 22px; margin-left: -11px;
-  border-radius: 50%; background: var(--accent); display: grid; place-items: center;
-  transition: transform .3s var(--ease), background .3s;
-}
-.follow-btn svg { width: 14px; height: 14px; transition: transform .3s var(--ease); }
+/* Aktionen rechts */
+.actions { position: absolute; right: 6px; bottom: 16px; z-index: 7; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.avatar-wrap { position: relative; margin-bottom: 10px; }
+.avatar { width: 48px; height: 48px; border-radius: 50%; border: 2px solid #fff; display: grid; place-items: center; font-weight: 800; font-size: 18px; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0,0,0,.4); overflow: hidden; }
+.follow-btn { position: absolute; left: 50%; bottom: -10px; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; transition: transform .35s var(--ease), background .3s, opacity .3s; }
+.follow-btn svg { width: 13px; height: 13px; transition: transform .35s var(--ease); }
 .follow-btn.on { background: #fff; color: var(--accent); }
 .follow-btn.on svg { transform: rotate(360deg); }
-.follow-btn:active { transform: scale(.85); }
-.act { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
-.act-icon {
-  width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%;
-  transition: transform .15s var(--ease);
-}
+.act { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.6); min-width: 48px; }
+.act-icon { width: 46px; height: 42px; display: grid; place-items: center; transition: transform .15s var(--ease); }
 .act:active .act-icon { transform: scale(.85); }
-.act-icon svg { width: 36px; height: 36px; filter: drop-shadow(0 1px 4px rgba(0,0,0,.45)); }
-.act.like .act-icon svg path { transition: fill .2s; }
-.act.like.on .act-icon svg path { fill: var(--like); }
-.act.like.pop .act-icon { animation: pop .45s var(--ease); }
+.act-icon svg { width: 35px; height: 35px; filter: drop-shadow(0 1px 4px rgba(0,0,0,.45)); }
+.act-icon svg path { transition: fill .2s; }
+.act.like.on .act-icon svg path { fill: var(--accent); }
+.act.save.on .act-icon svg path { fill: var(--gold); }
+.act.pop .act-icon { animation: pop .45s var(--ease); }
 @keyframes pop { 0% { transform: scale(1); } 30% { transform: scale(.7); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
-.act.save.on .act-icon svg path { fill: #ffc107; }
-.act.save.pop .act-icon { animation: pop .45s var(--ease); }
-
-/* Rotierende Musik-Disk */
-.disc {
-  width: 46px; height: 46px; border-radius: 50%; margin-top: 4px; position: relative;
-  background: radial-gradient(circle, #111 0 30%, #2b2b2b 31% 34%, #111 35% 52%, #2b2b2b 53% 56%, #161616 57%);
-  display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,.5);
-  animation: spin 5s linear infinite; animation-play-state: paused;
-}
+.disc { width: 46px; height: 46px; border-radius: 50%; margin-top: 6px; display: grid; place-items: center; background: radial-gradient(circle, #111 0 30%, #2b2b2b 31% 34%, #111 35% 52%, #2b2b2b 53% 56%, #161616 57%); box-shadow: 0 2px 8px rgba(0,0,0,.5); animation: spin 5s linear infinite; animation-play-state: paused; }
 .disc-inner { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 800; }
 .slide.playing .disc { animation-play-state: running; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.notes { position: absolute; right: 44px; bottom: 30px; pointer-events: none; }
-.note {
-  position: absolute; font-size: 14px; opacity: 0; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.6);
-  animation: note 3s ease-in infinite; animation-play-state: paused;
-}
+.notes { position: absolute; right: 44px; bottom: 30px; z-index: 7; pointer-events: none; }
+.note { position: absolute; font-size: 14px; opacity: 0; text-shadow: 0 1px 3px rgba(0,0,0,.6); animation: note 3s ease-in infinite; animation-play-state: paused; }
 .note:nth-child(2) { animation-delay: 1s; }
 .note:nth-child(3) { animation-delay: 2s; }
 .slide.playing .note { animation-play-state: running; }
-@keyframes note {
-  0% { opacity: 0; transform: translate(0, 0) rotate(0) scale(.6); }
-  15% { opacity: 1; }
-  100% { opacity: 0; transform: translate(-26px, -60px) rotate(-25deg) scale(1.1); }
-}
+@keyframes note { 0% { opacity: 0; transform: translate(0,0) rotate(0) scale(.6); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(-26px,-60px) rotate(-25deg) scale(1.1); } }
 
-/* =========================================================
-   OVERLAY UNTEN LINKS (Infos)
-   ========================================================= */
-.info {
-  position: absolute; left: 12px; right: 80px; bottom: 18px; z-index: 7;
-  display: flex; flex-direction: column; gap: 7px; text-shadow: 0 1px 3px rgba(0,0,0,.6);
-}
-.username { font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 6px; }
-.badge { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: rgba(255,255,255,.18); text-shadow: none; }
-.desc {
-  font-size: 14px; line-height: 1.35; color: #fff; word-break: break-word;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer;
-}
-.desc.expanded { -webkit-line-clamp: unset; display: block; max-height: 30vh; overflow-y: auto; }
-.desc .tag { font-weight: 700; }
-.music { display: flex; align-items: center; gap: 6px; font-size: 13px; overflow: hidden; }
-.music svg { width: 15px; height: 15px; flex: none; }
-.marquee { overflow: hidden; white-space: nowrap; max-width: 70%; mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); }
+/* Infos unten links */
+.info { position: absolute; left: 12px; right: 78px; bottom: 16px; z-index: 7; display: flex; flex-direction: column; gap: 6px; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.username { align-self: flex-start; font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 6px; text-shadow: inherit; }
+.verified { width: 15px; height: 15px; flex: none; }
+.you-badge { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: rgba(255,255,255,.2); text-shadow: none; }
+.desc-wrap { font-size: 14px; line-height: 1.38; word-break: break-word; }
+.desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.desc-wrap.expanded .desc { -webkit-line-clamp: unset; display: block; max-height: 32vh; overflow-y: auto; }
+.more-btn { font-weight: 700; font-size: 14px; padding: 2px 0; text-shadow: inherit; }
+.tag { font-weight: 700; cursor: pointer; }
+.music { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.music svg { width: 14px; height: 14px; flex: none; }
+.marquee { overflow: hidden; white-space: nowrap; max-width: 72%; -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); }
 .marquee span { display: inline-block; animation: marquee 10s linear infinite; animation-play-state: paused; }
-.marquee span::after { content: attr(data-text); padding-left: 2.5em; }
 .marquee span::before { content: ""; padding-left: 2.5em; }
+.marquee span::after { content: attr(data-text); padding-left: 2.5em; }
 .slide.playing .marquee span { animation-play-state: running; }
-@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes marquee { to { transform: translateX(-50%); } }
 
-/* Fortschrittsbalken (anklickbar / ziehbar) */
-.progress {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 8; height: 16px;
-  display: flex; align-items: flex-end; cursor: pointer; touch-action: none;
-}
-.progress-track { position: relative; width: 100%; height: 2px; background: rgba(255,255,255,.25); transition: height .15s; }
-.progress-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: rgba(255,255,255,.9); }
-.progress:hover .progress-track, .progress.drag .progress-track { height: 5px; }
-.progress-fill::after {
-  content: ""; position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%;
-  background: #fff; transform: scale(0); transition: transform .15s;
-}
-.progress:hover .progress-fill::after, .progress.drag .progress-fill::after { transform: scale(1); }
-.time-tip {
-  position: absolute; left: 50%; bottom: 70px; z-index: 9; transform: translateX(-50%);
-  font-size: 22px; font-weight: 800; letter-spacing: .5px; text-shadow: 0 2px 8px rgba(0,0,0,.7);
-  opacity: 0; transition: opacity .15s; pointer-events: none; font-variant-numeric: tabular-nums;
-}
+.progress { position: absolute; left: 0; right: 0; bottom: 0; z-index: 8; height: 16px; display: flex; align-items: flex-end; cursor: pointer; touch-action: none; }
+.progress-track { position: relative; width: 100%; height: 2px; background: rgba(255,255,255,.22); transition: height .15s; }
+.progress-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: rgba(255,255,255,.85); }
+.slide.paused .progress-track, .progress:hover .progress-track, .progress.drag .progress-track { height: 5px; }
+.progress-fill::after { content: ""; position: absolute; right: -6px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: #fff; transform: scale(0); transition: transform .15s; }
+.slide.paused .progress-fill::after, .progress:hover .progress-fill::after, .progress.drag .progress-fill::after { transform: scale(1); }
+.time-tip { position: absolute; left: 50%; bottom: 70px; z-index: 9; transform: translateX(-50%); font-size: 22px; font-weight: 800; text-shadow: 0 2px 8px rgba(0,0,0,.7); opacity: 0; transition: opacity .15s; pointer-events: none; font-variant-numeric: tabular-nums; }
 .slide.seeking .time-tip { opacity: 1; }
 .slide.seeking .info, .slide.seeking .actions { opacity: 0; transition: opacity .15s; }
 
-/* Leerer Feed */
-.empty {
-  height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
-  color: var(--text-dim); text-align: center; padding: 30px;
-}
+.empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text-dim); text-align: center; padding: 30px; }
+.empty .big { font-size: 44px; }
+.empty strong { color: var(--text); font-size: 17px; }
 
-/* =========================================================
-   BOTTOM NAV
-   ========================================================= */
+/* ================= Bottom-Navigation ================= */
 .bottom-nav {
   flex: none; height: calc(var(--nav-h) + var(--safe-b)); padding-bottom: var(--safe-b);
-  background: #000; border-top: 1px solid rgba(255,255,255,.08);
-  display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; z-index: 30;
+  background: var(--bg); border-top: 1px solid rgba(255,255,255,.07);
+  display: grid; grid-template-columns: repeat(4, 1fr); align-items: center; z-index: 60; position: relative;
 }
-.nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; font-weight: 600; color: var(--text-mute); transition: color .2s; height: 100%; justify-content: center; }
-.nav-item svg { width: 26px; height: 26px; }
-.nav-item.active { color: #fff; }
-.upload-btn { justify-self: center; position: relative; width: 48px; height: 32px; }
-.upload-btn::before, .upload-btn::after { content: ""; position: absolute; top: 0; width: 40px; height: 100%; border-radius: 9px; }
+.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 10px; font-weight: 600; color: var(--text-mute); transition: color .2s; height: 100%; }
+.nav-item svg { width: 25px; height: 25px; }
+.nav-item.active { color: var(--text); }
+.upload-btn { justify-self: center; position: relative; width: 46px; height: 30px; }
+.upload-btn::before, .upload-btn::after { content: ""; position: absolute; top: 0; width: 38px; height: 100%; border-radius: 9px; }
 .upload-btn::before { left: 0; background: var(--accent-2); }
 .upload-btn::after { right: 0; background: var(--accent); }
-.upload-btn span {
-  position: absolute; inset: 0 4px; z-index: 1; background: #fff; border-radius: 8px; color: #000;
-  display: grid; place-items: center; transition: transform .15s;
-}
-.upload-btn:active span { transform: scale(.92); }
-.upload-btn svg { width: 20px; height: 20px; }
+.upload-btn span { position: absolute; inset: 0 4px; z-index: 1; background: #fff; border-radius: 8px; color: #000; display: grid; place-items: center; transition: transform .15s; }
+.upload-btn:active span { transform: scale(.9); }
+.upload-btn svg { width: 19px; height: 19px; }
 
-/* Desktop: Pfeil-Navigation */
-.desk-nav { display: none; }
+/* ================= Seiten (Entdecken, Profil, Creator) ================= */
+.page {
+  position: absolute; left: 0; right: 0; top: 0; bottom: calc(var(--nav-h) + var(--safe-b)); z-index: 40;
+  background: var(--page); display: flex; flex-direction: column;
+  opacity: 0; transform: translateY(14px); visibility: hidden;
+  transition: opacity .25s ease, transform .3s var(--ease), visibility 0s .3s;
+}
+.page.open { opacity: 1; transform: none; visibility: visible; transition: opacity .25s ease, transform .3s var(--ease), visibility 0s; }
+.page.push { z-index: 45; transform: translateX(100%); opacity: 1; }
+.page.push.open { transform: none; }
+.page-head { flex: none; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 4px; padding: calc(8px + var(--safe-t)) 8px 8px; border-bottom: 1px solid var(--border); }
+.page-head h2 { font-size: 16px; font-weight: 700; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.page-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px 14px 28px; }
+.section-title { font-size: 15px; font-weight: 700; margin: 18px 0 10px; display: flex; align-items: center; justify-content: space-between; }
+.section-title:first-child { margin-top: 0; }
+.section-title small { font-size: 12px; font-weight: 500; color: var(--text-mute); }
+.page-open .desk-nav { display: none !important; }
+
+.search { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 8px; background: var(--surface-2); }
+.search svg { width: 18px; height: 18px; color: var(--text-mute); flex: none; }
+.search input { flex: 1; min-width: 0; background: none; border: 0; outline: none; font-size: 15px; }
+.search input::placeholder { color: var(--text-mute); }
+.search input::-webkit-search-cancel-button { display: none; }
+.search button { width: 22px; height: 22px; border-radius: 50%; background: var(--surface-3); display: grid; place-items: center; }
+.search button svg { width: 12px; height: 12px; color: var(--text); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 18px; background: var(--surface-2); font-size: 13px; font-weight: 600; transition: background .2s; }
+.chip:hover { background: var(--surface-3); }
+.chip .hash { width: 20px; height: 20px; border-radius: 50%; background: var(--surface-3); display: grid; place-items: center; font-weight: 800; font-size: 12px; }
+.chip small { color: var(--text-mute); font-weight: 500; }
+.creator-row { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+.creator-row::-webkit-scrollbar { display: none; }
+.creator-card { flex: none; width: 74px; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; text-align: center; }
+.creator-card .avatar { width: 62px; height: 62px; font-size: 22px; border-width: 0; }
+.creator-card span { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim); }
+.user-list { display: flex; flex-direction: column; gap: 4px; }
+.user-row { display: flex; align-items: center; gap: 12px; padding: 8px 4px; border-radius: 10px; text-align: left; width: 100%; }
+.user-row:hover { background: var(--surface); }
+.user-row .avatar { width: 48px; height: 48px; font-size: 18px; border-width: 0; flex: none; }
+.user-row div { flex: 1; min-width: 0; }
+.user-row b { display: block; font-size: 15px; }
+.user-row small { color: var(--text-mute); font-size: 13px; }
+
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+.grid-item { position: relative; aspect-ratio: 9 / 16; max-width: 100%; background: var(--surface-2); overflow: hidden; cursor: pointer; }
+.grid-item img, .grid-item video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.grid-item::after { content: ""; position: absolute; inset: 55% 0 0; background: linear-gradient(transparent, rgba(0,0,0,.6)); pointer-events: none; }
+.g-views { position: absolute; left: 6px; bottom: 5px; z-index: 1; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 3px; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+.g-views svg { width: 12px; height: 12px; }
+.g-del { position: absolute; right: 4px; top: 4px; z-index: 1; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,.6); display: grid; place-items: center; }
+.g-del svg { width: 15px; height: 15px; }
+.g-del:hover { background: var(--accent); }
+.grid-empty { grid-column: 1 / -1; text-align: center; color: var(--text-mute); padding: 34px 10px; font-size: 14px; line-height: 1.5; }
+
+.profile-top { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0 14px; text-align: center; }
+.profile-top .avatar { width: 92px; height: 92px; font-size: 36px; border-width: 0; }
+.profile-top .handle { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+.name-input { background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 3px 8px; font-size: 17px; font-weight: 800; text-align: center; width: 220px; max-width: 100%; outline: none; }
+.name-input:focus, .bio-input:focus { border-color: var(--border); background: var(--surface-2); }
+.bio-input { width: 100%; max-width: 320px; min-height: 40px; resize: none; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 6px 8px; font-size: 14px; text-align: center; color: var(--text-dim); outline: none; }
+.bio { font-size: 14px; color: var(--text-dim); max-width: 320px; line-height: 1.4; }
+.stats { display: flex; gap: 26px; margin: 6px 0 4px; }
+.stat { text-align: center; }
+.stat b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--text-mute); }
+.btn { padding: 10px 26px; border-radius: 6px; font-weight: 700; font-size: 15px; transition: background .2s, transform .15s; }
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-secondary { background: var(--surface-2); }
+.btn-row { display: flex; gap: 8px; margin-top: 4px; }
+.ptabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--border); margin: 6px -14px 2px; }
+.ptab { display: grid; place-items: center; padding: 10px 0; color: var(--text-mute); position: relative; }
+.ptab svg { width: 22px; height: 22px; }
+.ptab.active { color: var(--text); }
+.ptab.active::after { content: ""; position: absolute; left: 30%; right: 30%; bottom: -1px; height: 2px; background: var(--text); }
+.grid-wrap { margin: 0 -14px; }
+.storage-info { margin-top: 18px; font-size: 12px; color: var(--text-mute); text-align: center; line-height: 1.5; }
+.link-danger { display: block; margin: 8px auto 0; color: #ff6b81; font-size: 13px; font-weight: 600; padding: 6px 10px; }
+
+/* ================= Desktop-Extras ================= */
+.desk-nav, .hint { display: none; }
 @media (min-width: 700px) and (hover: hover) {
-  .desk-nav {
-    position: fixed; top: 50%;
-    left: min(calc(100vw - 68px), calc(50% + min(50vw, (var(--app-h) - var(--nav-h)) * 9 / 32) + 20px));
-    transform: translateY(-50%); z-index: 40; display: flex; flex-direction: column; gap: 14px;
-  }
+  .desk-nav { position: fixed; top: 50%; transform: translateY(-50%); z-index: 70; display: flex; flex-direction: column; gap: 14px; left: min(calc(100vw - 68px), calc(50% + min(50vw, (var(--vh) - var(--nav-h)) * 9 / 32) + 20px)); }
   .desk-nav button { width: 48px; height: 48px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; transition: background .2s, opacity .2s; }
   .desk-nav button:hover { background: var(--surface-3); }
   .desk-nav button:disabled { opacity: .3; cursor: default; }
   .desk-nav svg { width: 22px; height: 22px; }
 }
-.hint { display: none; }
-@media (min-width: 1000px) and (hover: hover) {
-  .hint {
-    display: block; position: fixed; left: 24px; bottom: 24px; z-index: 40; font-size: 12px; color: var(--text-mute); line-height: 1.8;
-  }
+@media (min-width: 1050px) and (hover: hover) {
+  .hint { display: block; position: fixed; left: 24px; bottom: 24px; z-index: 70; font-size: 12px; color: var(--text-mute); line-height: 1.9; }
   .hint kbd { display: inline-block; min-width: 22px; padding: 0 6px; margin-right: 6px; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--border); text-align: center; font-family: inherit; color: var(--text-dim); }
 }
 
-/* =========================================================
-   SHEETS (Kommentare, Upload, Profil)
-   ========================================================= */
-.sheet-backdrop {
-  position: fixed; inset: 0; z-index: 100; background: rgba(0, 0, 0, .5);
-  opacity: 0; pointer-events: none; transition: opacity .3s;
-}
+/* ================= Sheets ================= */
+.sheet-backdrop { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.45); opacity: 0; pointer-events: none; transition: opacity .3s; }
 .sheet-backdrop.open { opacity: 1; pointer-events: auto; }
 .sheet {
-  position: fixed; left: 50%; bottom: 0; z-index: 101;
-  width: 100%; max-width: 560px; max-height: calc(var(--app-h) * .78);
-  background: var(--surface); border-radius: 16px 16px 0 0;
-  transform: translate(-50%, 105%); transition: transform .38s var(--ease);
-  display: flex; flex-direction: column; padding-bottom: var(--safe-b);
-  box-shadow: 0 -10px 40px rgba(0,0,0,.5);
+  position: fixed; left: 50%; bottom: 0; z-index: 101; width: 100%; max-width: 560px; max-height: calc(var(--vh) * .8);
+  background: var(--surface); border-radius: 14px 14px 0 0; transform: translate(-50%, 105%); visibility: hidden;
+  transition: transform .36s var(--ease), visibility 0s .36s; display: flex; flex-direction: column;
+  padding-bottom: var(--safe-b); box-shadow: 0 -10px 40px rgba(0,0,0,.5);
 }
-.sheet.open { transform: translate(-50%, 0); }
+.sheet.open { transform: translate(-50%, 0); visibility: visible; transition: transform .36s var(--ease), visibility 0s; }
 .sheet.dragging { transition: none; }
-.sheet.tall { height: calc(var(--app-h) * .72); }
-.sheet-head { position: relative; flex: none; padding: 14px 48px 12px; text-align: center; font-weight: 700; font-size: 15px; border-bottom: 1px solid var(--border); touch-action: none; cursor: grab; }
-.sheet-head::before { content: ""; position: absolute; left: 50%; top: 6px; width: 36px; height: 4px; margin-left: -18px; border-radius: 2px; background: rgba(255,255,255,.25); }
+.sheet.tall { height: calc(var(--vh) * .7); }
+.sheet-head { position: relative; flex: none; padding: 16px 48px 12px; text-align: center; font-weight: 700; font-size: 14px; touch-action: none; cursor: grab; }
+.sheet-head::before { content: ""; position: absolute; left: 50%; top: 6px; width: 36px; height: 4px; margin-left: -18px; border-radius: 2px; background: rgba(255,255,255,.22); }
 .sheet-close { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; }
 .sheet-close:hover { background: var(--surface-2); }
-.sheet-close svg { width: 20px; height: 20px; }
-.sheet-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px 16px 16px; }
+.sheet-close svg { width: 18px; height: 18px; }
+.sheet-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 16px; }
 
 /* Kommentare */
-.c-list { list-style: none; display: flex; flex-direction: column; }
-.c-item { display: flex; gap: 12px; padding: 12px 0; animation: cin .35s var(--ease); }
-@keyframes cin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.c-avatar { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 14px; text-transform: uppercase; }
+.c-list { list-style: none; }
+.c-item { display: flex; gap: 12px; padding: 11px 0; animation: cin .35s var(--ease); }
+@keyframes cin { from { opacity: 0; transform: translateY(8px); } }
+.c-avatar { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; text-transform: uppercase; }
 .c-main { flex: 1; min-width: 0; }
 .c-name { font-size: 13px; font-weight: 600; color: var(--text-mute); display: flex; align-items: center; gap: 6px; }
 .c-name .me { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: var(--accent); color: #fff; }
+.c-name .creator { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: var(--surface-3); color: var(--text-dim); }
 .c-text { font-size: 15px; line-height: 1.4; margin: 3px 0 4px; word-break: break-word; white-space: pre-wrap; }
 .c-meta { font-size: 12px; color: var(--text-mute); display: flex; gap: 14px; }
 .c-meta button { color: var(--text-mute); font-weight: 600; font-size: 12px; }
-.c-meta button:hover { color: #fff; }
-.c-like { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; color: var(--text-mute); padding-top: 6px; }
+.c-meta button:hover { color: var(--text); }
+.c-like { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; color: var(--text-mute); padding-top: 6px; min-width: 32px; }
 .c-like svg { width: 18px; height: 18px; }
-.c-like.on svg path { fill: var(--like); }
-.c-like.on { color: var(--like); }
+.c-like.on { color: var(--accent); }
 .c-empty { text-align: center; color: var(--text-mute); padding: 40px 10px; font-size: 14px; }
 .c-form { flex: none; display: flex; gap: 10px; align-items: flex-end; padding: 10px 12px; border-top: 1px solid var(--border); background: var(--surface); }
-.c-input {
-  flex: 1; min-height: 40px; max-height: 120px; resize: none; padding: 10px 14px; border-radius: 20px;
-  background: var(--surface-2); border: 1px solid transparent; outline: none; font-size: 15px; line-height: 1.3; transition: border-color .2s;
-}
-.c-input:focus { border-color: rgba(255,255,255,.25); }
+.c-input { flex: 1; min-height: 40px; max-height: 120px; resize: none; padding: 10px 14px; border-radius: 20px; background: var(--surface-2); border: 1px solid transparent; outline: none; font-size: 15px; line-height: 1.3; }
+.c-input:focus { border-color: rgba(255,255,255,.22); }
 .c-send { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; transition: opacity .2s, transform .15s; }
 .c-send:disabled { opacity: .35; cursor: default; }
-.c-send:not(:disabled):active { transform: scale(.9); }
 .c-send svg { width: 18px; height: 18px; }
 
+/* Teilen-Sheet */
+.share-row { display: flex; gap: 16px; overflow-x: auto; padding: 6px 2px 14px; scrollbar-width: none; }
+.share-row::-webkit-scrollbar { display: none; }
+.share-row + .share-row { border-top: 1px solid var(--border); padding-top: 16px; }
+.share-item { flex: none; width: 64px; display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 11.5px; color: var(--text-dim); text-align: center; line-height: 1.25; }
+.share-item .circle { width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-3); color: #fff; transition: transform .15s; }
+.share-item:active .circle { transform: scale(.9); }
+.share-item .circle svg { width: 24px; height: 24px; }
+.share-item.on .circle { background: var(--gold); color: #000; }
+.share-item.active .circle { background: var(--accent-2); color: #000; }
+.cancel-btn { width: 100%; padding: 14px; border-top: 1px solid var(--border); font-weight: 600; font-size: 15px; }
+
 /* Upload */
-.drop {
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;
-  min-height: 190px; border: 2px dashed rgba(255,255,255,.2); border-radius: 14px; padding: 20px; cursor: pointer;
-  color: var(--text-dim); transition: border-color .2s, background .2s;
-}
-.drop:hover, .drop.over { border-color: var(--accent); background: rgba(254, 44, 85, .06); }
+.drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; min-height: 190px; border: 2px dashed rgba(255,255,255,.2); border-radius: 14px; padding: 20px; cursor: pointer; color: var(--text-dim); transition: border-color .2s, background .2s; }
+.drop:hover, .drop.over { border-color: var(--accent); background: rgba(254,44,85,.06); }
 .drop svg { width: 44px; height: 44px; }
-.drop strong { color: #fff; font-size: 16px; }
+.drop strong { color: var(--text); font-size: 16px; }
 .drop small { color: var(--text-mute); }
-.preview { display: none; position: relative; border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 9 / 16; max-height: 42vh; margin: 0 auto; }
+.preview { display: none; position: relative; border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 9 / 16; max-height: 40vh; max-width: 100%; margin: 0 auto; }
 .preview video { width: 100%; height: 100%; object-fit: contain; display: block; }
 .preview-change { position: absolute; right: 8px; top: 8px; padding: 6px 12px; border-radius: 16px; background: rgba(0,0,0,.6); font-size: 13px; font-weight: 600; }
 .has-file .drop { display: none; }
@@ -388,61 +384,23 @@ svg { display: block; }
 .field { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
 .field label { font-size: 13px; font-weight: 600; color: var(--text-dim); display: flex; justify-content: space-between; }
 .field label span { color: var(--text-mute); font-weight: 400; }
-.field input, .field textarea {
-  width: 100%; padding: 11px 13px; border-radius: 10px; background: var(--surface-2); border: 1px solid transparent; outline: none; font-size: 15px; transition: border-color .2s;
-}
+.field input, .field textarea { width: 100%; padding: 11px 13px; border-radius: 10px; background: var(--surface-2); border: 1px solid transparent; outline: none; font-size: 15px; }
 .field textarea { resize: vertical; min-height: 70px; max-height: 180px; }
-.field input:focus, .field textarea:focus { border-color: rgba(255,255,255,.25); }
+.field input:focus, .field textarea:focus { border-color: rgba(255,255,255,.22); }
+.tag-suggest { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tag-suggest button { padding: 5px 10px; border-radius: 14px; background: var(--surface-2); font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
 .file-meta { margin-top: 8px; text-align: center; font-size: 12px; color: var(--text-mute); }
-.primary {
-  width: 100%; margin-top: 18px; padding: 14px; border-radius: 10px; background: var(--accent); font-weight: 700; font-size: 16px;
-  transition: opacity .2s, transform .15s;
-}
+.primary { width: 100%; margin-top: 18px; padding: 14px; border-radius: 8px; background: var(--accent); font-weight: 700; font-size: 16px; transition: opacity .2s; }
 .primary:disabled { opacity: .4; cursor: default; }
-.primary:not(:disabled):active { transform: scale(.98); }
 
-/* Profil */
-.profile-head { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 0 18px; }
-.profile-head .avatar { width: 84px; height: 84px; font-size: 32px; }
-.profile-name { display: flex; align-items: center; gap: 8px; }
-.profile-name input { background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 4px 8px; font-size: 18px; font-weight: 800; text-align: center; width: 200px; outline: none; }
-.profile-name input:focus { border-color: var(--border); background: var(--surface-2); }
-.stats { display: flex; gap: 28px; margin-top: 6px; }
-.stat { text-align: center; }
-.stat b { display: block; font-size: 17px; }
-.stat span { font-size: 12px; color: var(--text-mute); }
-.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
-.grid-item { position: relative; aspect-ratio: 9 / 16; background: var(--surface-2); overflow: hidden; border-radius: 4px; cursor: pointer; }
-.grid-item video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-.grid-item .g-likes { position: absolute; left: 6px; bottom: 5px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 3px; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
-.grid-item .g-likes svg { width: 13px; height: 13px; }
-.grid-item .g-del { position: absolute; right: 4px; top: 4px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,.6); display: grid; place-items: center; }
-.grid-item .g-del svg { width: 15px; height: 15px; }
-.grid-item .g-del:hover { background: var(--accent); }
-.grid-empty { grid-column: 1 / -1; text-align: center; color: var(--text-mute); padding: 30px 10px; font-size: 14px; line-height: 1.5; }
-.section-title { font-size: 13px; font-weight: 700; color: var(--text-dim); margin: 6px 0 10px; display: flex; align-items: center; gap: 6px; }
-.storage-info { margin-top: 16px; font-size: 12px; color: var(--text-mute); text-align: center; line-height: 1.5; }
-.danger { margin-top: 10px; width: 100%; padding: 11px; border-radius: 10px; background: var(--surface-2); color: #ff6b81; font-weight: 600; font-size: 14px; }
-.danger:hover { background: var(--surface-3); }
-
-/* Toast */
-.toast {
-  position: fixed; left: 50%; top: calc(70px + var(--safe-t)); z-index: 200;
-  transform: translate(-50%, -20px); opacity: 0; pointer-events: none;
-  padding: 10px 18px; border-radius: 8px; background: rgba(40, 40, 40, .95); font-size: 14px; font-weight: 600;
-  transition: opacity .25s, transform .25s var(--ease); max-width: 90vw; text-align: center;
-  box-shadow: 0 8px 24px rgba(0,0,0,.4);
-}
+/* Toast + Dialog */
+.toast { position: fixed; left: 50%; top: calc(110px + var(--safe-t)); z-index: 300; transform: translate(-50%, -16px); opacity: 0; pointer-events: none; padding: 10px 18px; border-radius: 8px; background: rgba(38,38,42,.96); font-size: 14px; font-weight: 600; transition: opacity .25s, transform .25s var(--ease); max-width: 90vw; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
-
-/* Bestätigungsdialog */
-.confirm {
-  position: fixed; inset: 0; z-index: 300; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.6); padding: 24px;
-}
+.confirm { position: fixed; inset: 0; z-index: 400; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.6); padding: 24px; }
 .confirm.open { display: flex; animation: fadein .2s; }
 @keyframes fadein { from { opacity: 0; } }
 .confirm-box { width: 100%; max-width: 320px; background: var(--surface-2); border-radius: 14px; overflow: hidden; text-align: center; animation: zoomin .25s var(--ease); }
-@keyframes zoomin { from { transform: scale(.9); } }
+@keyframes zoomin { from { transform: scale(.92); } }
 .confirm-box p { padding: 22px 20px; font-size: 15px; line-height: 1.4; }
 .confirm-actions { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--border); }
 .confirm-actions button { padding: 14px; font-weight: 600; }
@@ -450,75 +408,170 @@ svg { display: block; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-  .feed { scroll-behavior: auto; }
 }
 </style>
 </head>
 <body>
 
-<div class="backdrop-blur" aria-hidden="true"></div>
+<div class="backdrop" aria-hidden="true"></div>
+
+<div class="splash" id="splash" aria-hidden="true">
+  <div class="splash-logo">
+    <div class="logo-mark"><span></span><span></span><span><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.2-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"/></svg></span></div>
+    ClipFeed
+  </div>
+</div>
 
 <main class="app" id="app">
   <header class="topbar">
-    <div class="brand"><span class="brand-dot"></span>ClipFeed</div>
-    <nav class="tabs" role="tablist" aria-label="Feed-Filter">
-      <button class="tab" role="tab" data-filter="following" aria-selected="false">Folge ich</button>
-      <button class="tab active" role="tab" data-filter="all" aria-selected="true">Für dich</button>
-    </nav>
     <button class="icon-btn" id="muteBtn" aria-label="Ton an/aus"></button>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Feed">
+      <button class="tab" role="tab" data-mode="following" aria-selected="false">Folge ich</button>
+      <button class="tab active" role="tab" data-mode="all" aria-selected="true">Für dich</button>
+    </nav>
+    <div class="list-title" id="listTitle" hidden></div>
+    <button class="icon-btn" id="topRightBtn" aria-label="Suchen"></button>
   </header>
+
+  <button class="unmute-pill" id="unmutePill" hidden></button>
 
   <section class="feed" id="feed" aria-label="Video-Feed"></section>
 
+  <!-- Entdecken -->
+  <section class="page" id="discoverPage" aria-label="Entdecken">
+    <div class="page-head">
+      <label class="search" for="searchInput">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="searchInput" type="search" placeholder="Suchen" autocomplete="off" enterkeyhint="search">
+        <button type="button" id="searchClear" aria-label="Suche leeren" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </label>
+    </div>
+    <div class="page-body">
+      <div id="discoverHome">
+        <div class="section-title">Trends</div>
+        <div class="chips" id="trendChips"></div>
+        <div class="section-title">Creator</div>
+        <div class="creator-row" id="creatorRow"></div>
+        <div class="section-title">Beliebt <small>nach Likes</small></div>
+        <div class="grid-wrap"><div class="grid" id="popularGrid"></div></div>
+      </div>
+      <div id="discoverResults" hidden>
+        <div id="userResults"></div>
+        <div class="section-title" id="videoResultsTitle">Videos</div>
+        <div class="grid-wrap"><div class="grid" id="videoResults"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Eigenes Profil -->
+  <section class="page" id="mePage" aria-label="Profil">
+    <div class="page-head"><span></span><h2 id="meHandle">@du</h2><span></span></div>
+    <div class="page-body">
+      <div class="profile-top">
+        <div class="avatar" id="meAvatar"></div>
+        <label for="meName" class="sr-only">Benutzername</label>
+        <input class="name-input" id="meName" maxlength="24" spellcheck="false" autocomplete="off">
+        <div class="stats">
+          <div class="stat"><b id="meFollowing">0</b><span>Folge ich</span></div>
+          <div class="stat"><b id="meFollowers">0</b><span>Follower</span></div>
+          <div class="stat"><b id="meLikes">0</b><span>Likes</span></div>
+        </div>
+        <label for="meBio" class="sr-only">Bio</label>
+        <textarea class="bio-input" id="meBio" maxlength="80" rows="1" placeholder="Tippe, um eine Bio hinzuzufügen"></textarea>
+        <div class="btn-row"><button class="btn btn-primary" id="meUpload" type="button">Video hochladen</button></div>
+      </div>
+      <div class="ptabs" role="tablist">
+        <button class="ptab active" data-ptab="videos" aria-label="Meine Videos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+        <button class="ptab" data-ptab="saved" aria-label="Gespeichert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg></button>
+        <button class="ptab" data-ptab="liked" aria-label="Gefällt mir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20.5 10.9 19.5C6 15.1 3 12.3 3 8.9 3 6.1 5.1 4 7.8 4c1.6 0 3.1.7 4.2 1.9C13.1 4.7 14.6 4 16.2 4 18.9 4 21 6.1 21 8.9c0 3.4-3 6.2-7.9 10.6L12 20.5Z"/></svg></button>
+      </div>
+      <div class="grid-wrap"><div class="grid" id="meGrid"></div></div>
+      <div class="storage-info" id="storageInfo"></div>
+      <button class="link-danger" id="resetBtn" type="button">Alle lokalen Daten löschen</button>
+    </div>
+  </section>
+
+  <!-- Creator-Profil -->
+  <section class="page push" id="creatorPage" aria-label="Creator-Profil">
+    <div class="page-head">
+      <button class="icon-btn" id="creatorBack" aria-label="Zurück"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg></button>
+      <h2 id="crHandle"></h2><span></span>
+    </div>
+    <div class="page-body">
+      <div class="profile-top">
+        <div class="avatar" id="crAvatar"></div>
+        <div class="handle" id="crName"></div>
+        <div class="stats">
+          <div class="stat"><b id="crFollowing">0</b><span>Folge ich</span></div>
+          <div class="stat"><b id="crFollowers">0</b><span>Follower</span></div>
+          <div class="stat"><b id="crLikes">0</b><span>Likes</span></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" id="crFollow" type="button">Folgen</button></div>
+        <div class="bio" id="crBio"></div>
+      </div>
+      <div class="grid-wrap"><div class="grid" id="crGrid"></div></div>
+    </div>
+  </section>
+
   <nav class="bottom-nav" aria-label="Hauptnavigation">
-    <button class="nav-item active" id="navHome" aria-label="Start">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.2 2.8 10.6a1 1 0 0 0 1.25 1.56L5 11.4V20a1 1 0 0 0 1 1h4.5v-6h3v6H18a1 1 0 0 0 1-1v-8.6l.95.76a1 1 0 0 0 1.25-1.56L12 3.2Z"/></svg>
-      Start
+    <button class="nav-item active" data-nav="home" aria-label="Start">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.2 2.8 10.6a1 1 0 0 0 1.25 1.56L5 11.4V20a1 1 0 0 0 1 1h4.5v-6h3v6H18a1 1 0 0 0 1-1v-8.6l.95.76a1 1 0 0 0 1.25-1.56L12 3.2Z"/></svg>Start
     </button>
-    <button class="upload-btn" id="navUpload" aria-label="Video hochladen">
+    <button class="nav-item" data-nav="discover" aria-label="Entdecken">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Entdecken
+    </button>
+    <button class="upload-btn" data-nav="upload" aria-label="Video hochladen">
       <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
     </button>
-    <button class="nav-item" id="navProfile" aria-label="Profil">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" stroke-linecap="round"/></svg>
-      Ich
+    <button class="nav-item" data-nav="me" aria-label="Profil">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" stroke-linecap="round"/></svg>Profil
     </button>
   </nav>
 </main>
 
-<div class="desk-nav" aria-hidden="false">
+<div class="desk-nav">
   <button id="prevBtn" aria-label="Vorheriges Video"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg></button>
   <button id="nextBtn" aria-label="Nächstes Video"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
 </div>
-
 <div class="hint" aria-hidden="true">
   <div><kbd>↑</kbd><kbd>↓</kbd>Video wechseln</div>
-  <div><kbd>M</kbd>Ton an/aus</div>
   <div><kbd>Leertaste</kbd>Pause</div>
+  <div><kbd>M</kbd>Ton an/aus</div>
   <div><kbd>L</kbd>Liken</div>
   <div><kbd>C</kbd>Kommentare</div>
+  <div><kbd>←</kbd><kbd>→</kbd>5 s spulen</div>
 </div>
 
-<!-- Kommentar-Sheet -->
 <div class="sheet-backdrop" id="sheetBackdrop"></div>
+
+<!-- Kommentare -->
 <section class="sheet tall" id="commentSheet" role="dialog" aria-modal="true" aria-labelledby="commentTitle">
-  <div class="sheet-head" data-drag>
-    <span id="commentTitle">0 Kommentare</span>
+  <div class="sheet-head" data-drag><span id="commentTitle">Kommentare</span>
     <button class="sheet-close" data-close aria-label="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>
   <div class="sheet-body"><ul class="c-list" id="commentList"></ul></div>
   <form class="c-form" id="commentForm" autocomplete="off">
     <label for="commentInput" class="sr-only">Kommentar</label>
     <textarea class="c-input" id="commentInput" rows="1" maxlength="500" placeholder="Kommentar hinzufügen …"></textarea>
-    <button class="c-send" id="commentSend" type="submit" disabled aria-label="Senden">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/></svg>
-    </button>
+    <button class="c-send" id="commentSend" type="submit" disabled aria-label="Senden"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/></svg></button>
   </form>
 </section>
 
-<!-- Upload-Sheet -->
+<!-- Teilen & mehr -->
+<section class="sheet" id="shareSheet" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+  <div class="sheet-head" data-drag><span id="shareTitle">Teilen</span>
+    <button class="sheet-close" data-close aria-label="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="sheet-body">
+    <div class="share-row" id="shareTargets"></div>
+    <div class="share-row" id="shareActions"></div>
+  </div>
+  <button class="cancel-btn" data-close type="button">Abbrechen</button>
+</section>
+
+<!-- Upload -->
 <section class="sheet" id="uploadSheet" role="dialog" aria-modal="true" aria-labelledby="uploadTitle">
-  <div class="sheet-head" data-drag>
-    <span id="uploadTitle">Video hochladen</span>
+  <div class="sheet-head" data-drag><span id="uploadTitle">Video hochladen</span>
     <button class="sheet-close" data-close aria-label="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>
   <div class="sheet-body">
@@ -526,8 +579,7 @@ svg { display: block; }
       <input type="file" id="fileInput" accept="video/mp4,video/webm,video/quicktime,video/*" hidden>
       <div class="drop" id="dropZone" role="button" tabindex="0">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
-        <strong>Video auswählen</strong>
-        <span>oder hierher ziehen</span>
+        <strong>Video auswählen</strong><span>oder hierher ziehen</span>
         <small>MP4 / WebM / MOV · bleibt nur auf diesem Gerät</small>
       </div>
       <div class="preview" id="preview">
@@ -538,53 +590,22 @@ svg { display: block; }
       <div class="field">
         <label for="upDesc">Beschreibung <span id="descCount">0/300</span></label>
         <textarea id="upDesc" maxlength="300" placeholder="Beschreibe dein Video … #hashtags"></textarea>
+        <div class="tag-suggest" id="tagSuggest"></div>
       </div>
       <div class="field">
         <label for="upMusic">Musik-Titel</label>
         <input id="upMusic" maxlength="80" placeholder="Originalton">
       </div>
-      <button class="primary" id="publishBtn" type="submit" disabled>Veröffentlichen</button>
+      <button class="primary" id="publishBtn" type="submit" disabled>Posten</button>
     </form>
   </div>
 </section>
 
-<!-- Profil-Sheet -->
-<section class="sheet tall" id="profileSheet" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
-  <div class="sheet-head" data-drag>
-    <span id="profileTitle">Profil</span>
-    <button class="sheet-close" data-close aria-label="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  </div>
-  <div class="sheet-body">
-    <div class="profile-head">
-      <div class="avatar" id="profileAvatar"></div>
-      <div class="profile-name">
-        <label for="profileName" class="sr-only">Benutzername</label>
-        <input id="profileName" maxlength="24" spellcheck="false">
-      </div>
-      <div class="stats">
-        <div class="stat"><b id="statVideos">0</b><span>Videos</span></div>
-        <div class="stat"><b id="statFollowing">0</b><span>Folge ich</span></div>
-        <div class="stat"><b id="statLikes">0</b><span>Likes gegeben</span></div>
-      </div>
-    </div>
-    <div class="section-title">Meine Videos</div>
-    <div class="grid" id="myGrid"></div>
-    <div class="section-title" style="margin-top:18px">Gespeichert</div>
-    <div class="grid" id="savedGrid"></div>
-    <div class="storage-info" id="storageInfo"></div>
-    <button class="danger" id="resetBtn" type="button">Alle lokalen Daten löschen</button>
-  </div>
-</section>
-
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-<div class="confirm" id="confirm" role="alertdialog" aria-modal="true">
+<div class="confirm" id="confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmText">
   <div class="confirm-box">
     <p id="confirmText"></p>
-    <div class="confirm-actions">
-      <button type="button" id="confirmNo">Abbrechen</button>
-      <button type="button" id="confirmYes">Löschen</button>
-    </div>
+    <div class="confirm-actions"><button type="button" id="confirmNo">Abbrechen</button><button type="button" id="confirmYes">Löschen</button></div>
   </div>
 </div>
 
@@ -592,13 +613,11 @@ svg { display: block; }
 (() => {
   'use strict';
 
-  /* =========================================================
-     ICONS
-     ========================================================= */
+  /* ================= Icons ================= */
   const ICON = {
     heart: '<svg viewBox="0 0 24 24"><path fill="#fff" d="M12 21.2 10.6 20C5.4 15.4 2 12.3 2 8.5 2 5.4 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.4 22 8.5c0 3.8-3.4 6.9-8.6 11.5L12 21.2Z"/></svg>',
-    heartSmall: '<svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" d="M12 20.5 10.9 19.5C6 15.1 3 12.3 3 8.9 3 6.1 5.1 4 7.8 4c1.6 0 3.1.7 4.2 1.9C13.1 4.7 14.6 4 16.2 4 18.9 4 21 6.1 21 8.9c0 3.4-3 6.2-7.9 10.6L12 20.5Z"/></svg>',
-    heartFilled: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 21.2 10.6 20C5.4 15.4 2 12.3 2 8.5 2 5.4 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.4 22 8.5c0 3.8-3.4 6.9-8.6 11.5L12 21.2Z"/></svg>',
+    heartLine: '<svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" d="M12 20.5 10.9 19.5C6 15.1 3 12.3 3 8.9 3 6.1 5.1 4 7.8 4c1.6 0 3.1.7 4.2 1.9C13.1 4.7 14.6 4 16.2 4 18.9 4 21 6.1 21 8.9c0 3.4-3 6.2-7.9 10.6L12 20.5Z"/></svg>',
+    heartFill: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 21.2 10.6 20C5.4 15.4 2 12.3 2 8.5 2 5.4 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.4 22 8.5c0 3.8-3.4 6.9-8.6 11.5L12 21.2Z"/></svg>',
     comment: '<svg viewBox="0 0 24 24"><path fill="#fff" d="M12 2.5c5.5 0 10 3.9 10 8.8 0 4.8-4.5 8.7-10 8.7-.9 0-1.8-.1-2.7-.3L4.6 22a.7.7 0 0 1-1-.8l1-3.9C3 15.7 2 13.6 2 11.3c0-4.9 4.5-8.8 10-8.8Zm-4.5 7.4a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Zm4.5 0a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Zm4.5 0a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Z"/></svg>',
     bookmark: '<svg viewBox="0 0 24 24"><path fill="#fff" d="M6 2.5h12a1.5 1.5 0 0 1 1.5 1.5v17.2a.8.8 0 0 1-1.3.6L12 17.3l-6.2 4.5a.8.8 0 0 1-1.3-.6V4A1.5 1.5 0 0 1 6 2.5Z"/></svg>',
     share: '<svg viewBox="0 0 24 24"><path fill="#fff" d="M13.5 3.2a.9.9 0 0 1 1.5-.7l8 7.4a.9.9 0 0 1 0 1.3l-8 7.4a.9.9 0 0 1-1.5-.7v-3.6c-5.2 0-8.8 1.7-11.3 5.5-.3.4-.9.2-.9-.3C2 12.6 6.6 8.2 13.5 7.4V3.2Z"/></svg>',
@@ -608,155 +627,111 @@ svg { display: block; }
     soundOn: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M3 9.5v5a1 1 0 0 0 1 1h3.3l4.6 3.9a.7.7 0 0 0 1.1-.5V5.1a.7.7 0 0 0-1.1-.5L7.3 8.5H4a1 1 0 0 0-1 1Z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
     soundOff: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M3 9.5v5a1 1 0 0 0 1 1h3.3l4.6 3.9a.7.7 0 0 0 1.1-.5V5.1a.7.7 0 0 0-1.1-.5L7.3 8.5H4a1 1 0 0 0-1 1Z"/><path d="m16 9 5 6m0-6-5 6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
     play: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M7 4.6v14.8a1 1 0 0 0 1.5.86l12.3-7.4a1 1 0 0 0 0-1.72L8.5 3.74A1 1 0 0 0 7 4.6Z"/></svg>',
-    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3"/></svg>',
-    broken: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="14" height="14" rx="2"/><path d="m16.5 10 5-3v10l-5-3M3 3l18 18"/></svg>'
+    playSmall: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M7 5v14l11-7z"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+    back: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3"/></svg>',
+    broken: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="14" height="14" rx="2"/><path d="m16.5 10 5-3v10l-5-3M3 3l18 18"/></svg>',
+    verified: '<svg class="verified" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#20d5ec"/><path d="m7.5 12.3 3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>',
+    whatsapp: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.3 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.300 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.6-.1l2 1c.3.1.5.2.5.3.1.1.1.6-.1 1.2Z"/></svg>',
+    telegram: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.6 4.3 18.5 19c-.2 1-.8 1.3-1.700.8l-4.6-3.4-2.2 2.1c-.2.2-.4.4-.9.4l.3-4.7 8.6-7.8c.4-.3-.1-.5-.6-.2L6.8 12.9l-4.6-1.4c-1-.3-1-1 .2-1.5L20.3 3c.8-.3 1.6.2 1.3 1.3Z"/></svg>',
+    xlogo: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.8 3h3.1l-6.8 7.700L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.2-8.3L2 3h6.4l4.4 5.8L17.8 3Zm-1.1 16.2h1.7L7.4 4.7H5.6l11.1 14.5Z"/></svg>',
+    more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+    ban: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="m5.7 5.7 12.6 12.6"/></svg>',
+    speed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4.5 17a8.5 8.5 0 1 1 15 0"/><path d="m12 13 4-4"/></svg>',
+    autoNext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v13M7 12l5 5 5-5"/><path d="M5 20h14"/></svg>',
+    bookmarkLine: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>'
   };
 
-  /* =========================================================
-     MOCK-DATEN
-     Jede Quelle hat mehrere Fallback-URLs auf unterschiedlichen
-     Hosts. Fällt eine aus, wird automatisch die nächste versucht.
-     ========================================================= */
-  const SAMPLE = {
-    flower:   'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-    oceans:   'https://vjs.zencdn.net/v/oceans.mp4',
-    bbb:      'https://www.w3schools.com/html/mov_bbb.mp4',
-    s5:       'https://download.samplelib.com/mp4/sample-5s.mp4',
-    s10:      'https://download.samplelib.com/mp4/sample-10s.mp4',
-    s15:      'https://download.samplelib.com/mp4/sample-15s.mp4',
-    s20:      'https://download.samplelib.com/mp4/sample-20s.mp4',
-    s30:      'https://download.samplelib.com/mp4/sample-30s.mp4',
-    jelly:    'https://test-videos.co.uk/vids/jellyfish/mp4/h264/720/Jellyfish_720_10s_1MB.mp4',
-    sintel:   'https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_1MB.mp4',
-    bunny720: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4'
+  /* ================= Mock-Daten =================
+     Die Clips liegen im Ordner videos/ neben dieser Datei. */
+  const CREATORS = {
+    'farbrausch':   { name: 'Farbrausch Studio', bio: 'Farben, die sich bewegen 🌀 Jeden Tag ein neuer Loop.', followers: 412000, following: 87, verified: true },
+    'mathe.magie':  { name: 'Mathe Magie', bio: 'Mathe, aber schön. Fraktale, Formeln & Fun Facts 🤓', followers: 2100000, following: 12, verified: true },
+    'pixel.leben':  { name: 'Pixel Leben', bio: 'Simulationen & Code-Kunst. Alles selbst programmiert 💻', followers: 98700, following: 230, verified: false },
+    'geo.kunst':    { name: 'Geo Kunst', bio: 'Geometrie ist Kunst ◼️◻️', followers: 15400, following: 301, verified: false },
+    'regel110':     { name: 'Regel 110', bio: 'Informatik in 8 Sekunden ⚙️ Folge für mehr Nerd-Content.', followers: 3800000, following: 5, verified: true },
+    'plasma.vibes': { name: 'Plasma Vibes', bio: '90er Demoscene forever 🌈', followers: 7300, following: 410, verified: false },
+    'sunset.loops': { name: 'Sunset Loops', bio: 'Nur Sonnenuntergänge. Versprochen. 🌅', followers: 64200, following: 99, verified: false }
   };
 
+  const H = 3600e3;
   const SEED_VIDEOS = [
-    {
-      id: 'seed-1', user: 'natur.momente', verified: true,
-      desc: 'Wenn der Frühling endlich da ist 🌸 Einfach mal kurz durchatmen. #natur #frühling #aesthetic #fyp',
-      music: 'Spring Breeze – Lofi Garden', likes: 128400, shares: 2310,
-      sources: [SAMPLE.flower, SAMPLE.s10, SAMPLE.jelly],
-      comments: [
-        { user: 'lena.k', text: 'So beruhigend 😍', likes: 842, ago: 3600e3 * 5 },
-        { user: 'tom_outdoor', text: 'Wo ist das aufgenommen?', likes: 120, ago: 3600e3 * 9 },
-        { user: 'mia.draws', text: 'Die Farben sind unreal 🌷', likes: 64, ago: 3600e3 * 20 }
-      ]
-    },
-    {
-      id: 'seed-2', user: 'ocean.vibes', verified: false,
-      desc: 'POV: Du hast endlich Urlaub 🌊 Wer will mit? #meer #urlaub #travel #summer',
-      music: 'Waves – Chillhop Sessions', likes: 982100, shares: 15400,
-      sources: [SAMPLE.oceans, SAMPLE.s20, SAMPLE.bunny720],
-      comments: [
-        { user: 'jonas.reist', text: 'Nimm mich mit!!! ✈️', likes: 2310, ago: 3600e3 * 2 },
-        { user: 'sarah_m', text: 'Das Wasser 😮‍💨', likes: 455, ago: 3600e3 * 7 }
-      ]
-    },
-    {
-      id: 'seed-3', user: 'bunny.official', verified: true,
-      desc: 'Montagmorgen vs. Freitagabend 🐰😂 #comedy #relatable #animation',
-      music: 'Funny Bunny – Cartoon Beats', likes: 2400000, shares: 88200,
-      sources: [SAMPLE.bbb, SAMPLE.bunny720, SAMPLE.s15],
-      comments: [
-        { user: 'kevin.lol', text: 'Ich jeden Montag 💀', likes: 12900, ago: 3600e3 * 30 },
-        { user: 'anna.b', text: 'Der Hase bin ich', likes: 3200, ago: 3600e3 * 40 },
-        { user: 'max.ttv', text: 'Klassiker 🔥', likes: 980, ago: 3600e3 * 50 }
-      ]
-    },
-    {
-      id: 'seed-4', user: 'citylights.de', verified: false,
-      desc: 'Die Stadt schläft nie ✨ Kleine Zeitreise durch den Abend. #city #nightlife #cinematic',
-      music: 'Neon Nights – Synthwave Radio', likes: 45200, shares: 610,
-      sources: [SAMPLE.s30, SAMPLE.s20, SAMPLE.sintel],
-      comments: [
-        { user: 'fotograf.ben', text: 'Welche Kamera nutzt du?', likes: 33, ago: 3600e3 * 3 }
-      ]
-    },
-    {
-      id: 'seed-5', user: 'deep.blue', verified: true,
-      desc: 'Quallen sind einfach hypnotisch 🪼 Kann stundenlang zuschauen. #ocean #satisfying #relax',
-      music: 'Underwater – Ambient Dreams', likes: 310700, shares: 4020,
-      sources: [SAMPLE.jelly, SAMPLE.s15, SAMPLE.oceans],
-      comments: [
-        { user: 'lisa.marine', text: 'Ich studiere Meeresbiologie und liebe das 💙', likes: 1300, ago: 3600e3 * 12 },
-        { user: 'chill.guy', text: 'Perfekt zum Einschlafen', likes: 210, ago: 3600e3 * 16 }
-      ]
-    },
-    {
-      id: 'seed-6', user: 'shortfilm.club', verified: false,
-      desc: 'Dieser Kurzfilm hat mich emotional zerstört 🐉😭 Teil 1 #film #story #animation #sintel',
-      music: 'Epic Journey – Orchestral', likes: 760300, shares: 23100,
-      sources: [SAMPLE.sintel, SAMPLE.s30, SAMPLE.bbb],
-      comments: [
-        { user: 'filmfan99', text: 'Teil 2 bitte!!!', likes: 5400, ago: 3600e3 * 6 },
-        { user: 'nina.reads', text: 'Ich weine schon wieder', likes: 870, ago: 3600e3 * 11 }
-      ]
-    },
-    {
-      id: 'seed-7', user: 'daily.clips', verified: false,
-      desc: 'Kleiner Ausschnitt aus meinem Tag ☕ Was machst du gerade? #dayinmylife #vlog',
-      music: 'Coffee Break – Jazzhop', likes: 8900, shares: 112,
-      sources: [SAMPLE.s5, SAMPLE.s10, SAMPLE.flower],
-      comments: []
-    }
-  ];
+    { id: 'seed-1', user: 'farbrausch', desc: 'Wenn der Montag in Zeitlupe vorbeidreht 🌀 Schau bis zum Ende. #spirale #aesthetic #satisfying #fyp', music: 'Spiral Arp – Synth Garden', likes: 128400, views: 1830000, shares: 2310,
+      comments: [{ user: 'lena.k', text: 'Ich hab das jetzt 10 Mal geschaut 😵‍💫', likes: 842, ago: 5 * H }, { user: 'tom_design', text: 'Welche Farbpalette ist das?', likes: 120, ago: 9 * H }, { user: 'mia.draws', text: 'Perfekter Loop 🔁', likes: 64, ago: 20 * H }] },
+    { id: 'seed-2', user: 'mathe.magie', desc: 'Zoom in die Mandelbrot-Menge: unendlich viele Details aus einer einzigen Formel 🤯 #mathe #fraktal #wissen #fyp', music: 'Infinite Zoom – Lofi Lab', likes: 982100, views: 12400000, shares: 15400,
+      comments: [{ user: 'jonas.physik', text: 'z² + c und trotzdem so schön', likes: 2310, ago: 2 * H }, { user: 'sarah_m', text: 'Mein Gehirn nach 2 Sekunden 💀', likes: 455, ago: 7 * H }, { user: 'mathe.magie', text: 'Teil 2 kommt morgen 👀', likes: 3900, ago: 1 * H }] },
+    { id: 'seed-3', user: 'pixel.leben', desc: 'Conways Game of Life: Zellen leben, sterben und bilden Muster 🧬 Welche Form überlebt am längsten? #code #simulation #nerd', music: 'Cell Party – Chiptune Club', likes: 310700, views: 2900000, shares: 4020,
+      comments: [{ user: 'kevin.dev', text: 'Hab ich im Informatikunterricht programmiert 😄', likes: 1290, ago: 30 * H }, { user: 'anna.b', text: 'Sieht aus wie Bakterien unterm Mikroskop', likes: 320, ago: 40 * H }] },
+    { id: 'seed-4', user: 'geo.kunst', desc: 'Sierpinski-Teppich: Quadrate in Quadraten in Quadraten ◼️ #geometrie #kunst #fraktal', music: 'Carpet Ride – Ambient Tiles', likes: 45200, views: 388000, shares: 610,
+      comments: [{ user: 'fotograf.ben', text: 'Das wär ein krasses Wallpaper', likes: 33, ago: 3 * H }] },
+    { id: 'seed-5', user: 'regel110', desc: 'Eine einzige Regel, unendliche Komplexität. Rule 110 ist sogar Turing-vollständig ⚙️ #informatik #nerd #wissen', music: 'Rule 110 – Bitcrush Beats', likes: 2400000, views: 31000000, shares: 88200,
+      comments: [{ user: 'lisa.cs', text: 'Endlich erklärt das mal jemand 💙', likes: 13000, ago: 12 * H }, { user: 'chill.guy', text: 'Sieht aus wie Regen auf einer Scheibe', likes: 210, ago: 16 * H }, { user: 'max.ttv', text: 'Teil 2 mit Rule 30 bitte', likes: 980, ago: 50 * H }] },
+    { id: 'seed-6', user: 'plasma.vibes', desc: 'Retro-Plasma wie in den 90ern 🌈 Wer kennt den Effekt noch? #retro #demoscene #vibes', music: 'Plasma Dreams – Synthwave Radio', likes: 8900, views: 74000, shares: 112, comments: [] },
+    { id: 'seed-7', user: 'sunset.loops', desc: 'Sonnenuntergang, aber als Farbverlauf 🌅 Speichern für schlechte Tage. #sunset #aesthetic #calm', music: 'Golden Hour – Chill Keys', likes: 67300, views: 540000, shares: 1290,
+      comments: [{ user: 'jana.lia', text: 'Genau das hab ich gebraucht', likes: 410, ago: 4 * H }] },
+    { id: 'seed-8', user: 'mathe.magie', desc: 'Seepferdchen-Tal in der Mandelbrot-Menge 🐴 Ja, das heißt wirklich so. #mathe #fraktal #funfact', music: 'Seahorse Valley – Lofi Lab', likes: 541000, views: 6100000, shares: 9800,
+      comments: [{ user: 'paul.k', text: 'Ich seh kein Seepferdchen 😭', likes: 2100, ago: 6 * H }, { user: 'mathe.magie', text: '@paul.k Bei 0:05 genau hinschauen!', likes: 1700, ago: 5 * H }] },
+    { id: 'seed-9', user: 'geo.kunst', desc: 'Starr auf die Mitte und versuch nicht zu blinzeln 👁️ #illusion #hypnotisch #challenge', music: 'Hypno Rings – Ambient Tiles', likes: 223000, views: 2400000, shares: 7600,
+      comments: [{ user: 'luca.m', text: 'Mir ist jetzt schwindelig', likes: 980, ago: 8 * H }, { user: 'emma.r', text: 'Hab 3 Sekunden geschafft', likes: 450, ago: 9 * H }] },
+    { id: 'seed-10', user: 'pixel.leben', desc: 'Game of Life, aber in Gold ✨ 0,3 Startdichte, gleiche Regeln. #code #simulation #satisfying', music: 'Golden Cells – Chiptune Club', likes: 39800, views: 310000, shares: 410, comments: [] },
+    { id: 'seed-11', user: 'regel110', desc: 'Rule 30: daraus hat Mathematica früher Zufallszahlen gemacht 🎲 #informatik #zufall #nerd', music: 'Rule 30 – Bitcrush Beats', likes: 870000, views: 9200000, shares: 21000,
+      comments: [{ user: 'max.ttv', text: 'Danke für Teil 2!!', likes: 3200, ago: 2 * H }, { user: 'nora.codes', text: 'Wolfram wäre stolz', likes: 840, ago: 3 * H }] },
+    { id: 'seed-12', user: 'plasma.vibes', desc: 'Lava-Lampe im Browser 🫠 Komplett aus Mathe gerendert. #retro #lavalamp #vibes', music: 'Lava Lamp – Synthwave Radio', likes: 15600, views: 121000, shares: 230,
+      comments: [{ user: 'oma.inge', text: 'So eine hatte ich 1978 auch', likes: 5100, ago: 30 * H }] }
+  ].map((v, i) => ({ ...v, sources: [`videos/${i + 1}.mp4`], poster: `videos/${i + 1}.jpg` }));
 
-  /* =========================================================
-     PERSISTENZ
-     LocalStorage  → Likes, Kommentare, Follows, Saves, Profil
-     IndexedDB     → Video-Dateien (LocalStorage ist auf ~5 MB
-                     begrenzt und kann keine Binärdaten speichern)
-     ========================================================= */
-  const LS_KEY = 'clipfeed.v1';
-
+  /* ================= Speicher =================
+     LocalStorage: Likes, Kommentare, Follows, Einstellungen
+     IndexedDB: Videodateien (zu groß für LocalStorage) */
+  const LS_KEY = 'clipfeed.v2';
   const Store = {
-    state: { likes: {}, saves: {}, follows: {}, comments: {}, commentLikes: {}, shares: {}, profile: { name: 'du' }, muted: true },
+    state: {
+      likes: {}, saves: {}, follows: {}, comments: {}, commentLikes: {}, shares: {}, views: {}, hidden: {},
+      profile: { name: 'du', bio: '' }, muted: true, speed: 1, autoNext: false
+    },
     load() {
       try {
         const raw = localStorage.getItem(LS_KEY);
-        if (raw) Object.assign(this.state, JSON.parse(raw));
+        if (raw) {
+          const saved = JSON.parse(raw);
+          this.state = { ...this.state, ...saved, profile: { ...this.state.profile, ...(saved.profile || {}) } };
+        }
       } catch (err) { console.warn('LocalStorage nicht lesbar:', err); }
     },
     save() {
       try { localStorage.setItem(LS_KEY, JSON.stringify(this.state)); }
-      catch (err) { console.warn('LocalStorage nicht schreibbar:', err); toast('Speichern fehlgeschlagen (Speicher voll?)'); }
+      catch (err) { console.warn('LocalStorage nicht schreibbar:', err); }
     },
-    clear() {
-      try { localStorage.removeItem(LS_KEY); } catch (_) { /* ignorieren */ }
-    }
+    clear() { try { localStorage.removeItem(LS_KEY); } catch (_) { /* egal */ } }
   };
 
   const VideoDB = (() => {
     const DB_NAME = 'clipfeed-media', STORE = 'videos';
     let dbPromise = null;
-
     function open() {
       if (dbPromise) return dbPromise;
       dbPromise = new Promise((resolve, reject) => {
         if (!('indexedDB' in window)) return reject(new Error('IndexedDB nicht verfügbar'));
-        const req = indexedDB.open(DB_NAME, 1);
-        req.onupgradeneeded = () => {
-          const db = req.result;
-          if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'id' });
-        };
+        let req;
+        try { req = indexedDB.open(DB_NAME, 1); } catch (err) { return reject(err); }
+        req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE, { keyPath: 'id' }); };
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
       });
       return dbPromise;
     }
-
     async function tx(mode, fn) {
       const db = await open();
       return new Promise((resolve, reject) => {
         const t = db.transaction(STORE, mode);
-        const result = fn(t.objectStore(STORE));
-        t.oncomplete = () => resolve(result && 'result' in result ? result.result : undefined);
+        const req = fn(t.objectStore(STORE));
+        t.oncomplete = () => resolve(req ? req.result : undefined);
         t.onerror = () => reject(t.error);
         t.onabort = () => reject(t.error || new Error('Transaktion abgebrochen'));
       });
     }
-
     return {
       available: () => open().then(() => true, () => false),
       getAll: () => tx('readonly', s => s.getAll()),
@@ -766,26 +741,19 @@ svg { display: block; }
     };
   })();
 
-  /* =========================================================
-     HELFER
-     ========================================================= */
+  /* ================= Helfer ================= */
   const $ = (sel, root = document) => root.querySelector(sel);
-  const el = (tag, cls, html) => {
-    const n = document.createElement(tag);
-    if (cls) n.className = cls;
-    if (html != null) n.innerHTML = html;
-    return n;
-  };
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
 
   function formatCount(n) {
     if (n < 1000) return String(n);
-    const fmt = (v, s) => (v >= 100 ? Math.floor(v) : Math.floor(v * 10) / 10).toString().replace('.', ',') + s;
-    if (n < 1e6) return fmt(n / 1e3, 'K');
-    if (n < 1e9) return fmt(n / 1e6, 'M');
-    return fmt(n / 1e9, 'B');
+    const f = (v, s) => (v >= 100 ? Math.floor(v) : Math.floor(v * 10) / 10).toString().replace('.', ',') + s;
+    if (n < 1e6) return f(n / 1e3, 'K');
+    if (n < 1e9) return f(n / 1e6, 'M');
+    return f(n / 1e9, 'B');
   }
-
   function timeAgo(ts) {
     const s = Math.max(0, (Date.now() - ts) / 1000);
     if (s < 60) return 'gerade eben';
@@ -794,20 +762,17 @@ svg { display: block; }
     const d = h / 24; if (d < 7) return `vor ${Math.floor(d)} T.`;
     return new Date(ts).toLocaleDateString('de-DE');
   }
-
-  function formatTime(sec) {
-    if (!isFinite(sec)) return '0:00';
-    const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
-    return `${m}:${String(s).padStart(2, '0')}`;
-  }
-
+  const formatTime = sec => isFinite(sec) ? `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}` : '0:00';
   function formatBytes(b) {
     if (b < 1024 ** 2) return (b / 1024).toFixed(0) + ' KB';
     if (b < 1024 ** 3) return (b / 1024 ** 2).toFixed(1).replace('.', ',') + ' MB';
     return (b / 1024 ** 3).toFixed(2).replace('.', ',') + ' GB';
   }
-
-  // Deterministische Farbverläufe für Avatare, keine externen Bilder nötig.
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
   function avatarStyle(name) {
     let h = 0;
     for (const ch of name) h = (h * 31 + ch.codePointAt(0)) >>> 0;
@@ -816,19 +781,23 @@ svg { display: block; }
   }
   function paintAvatar(node, name) {
     node.setAttribute('style', avatarStyle(name));
-    node.textContent = (name.replace(/[^\p{L}\p{N}]/gu, '')[0] || '?');
+    node.textContent = name.replace(/[^\p{L}\p{N}]/gu, '')[0] || '?';
   }
-
-  // Beschreibung sicher rendern (kein innerHTML mit Nutzertext) und Hashtags hervorheben.
+  // Nutzertext nie per innerHTML einfügen; Hashtags/Erwähnungen werden klickbar.
   function renderRichText(node, text) {
     node.textContent = '';
-    const parts = text.split(/(#[\p{L}\p{N}_]+|@[\p{L}\p{N}_.]+)/gu);
-    for (const part of parts) {
+    for (const part of text.split(/(#[\p{L}\p{N}_]+|@[\p{L}\p{N}_.]+)/gu)) {
       if (!part) continue;
-      if (/^[#@]/.test(part)) { const b = el('span', 'tag'); b.textContent = part; node.append(b); }
-      else node.append(document.createTextNode(part));
+      if (/^[#@]/.test(part)) {
+        const t = el('span', 'tag');
+        t.textContent = part;
+        t.dataset.action = part[0] === '#' ? 'hashtag' : 'mention';
+        t.dataset.value = part.slice(1);
+        node.append(t);
+      } else node.append(document.createTextNode(part));
     }
   }
+  const tagsOf = v => (v.desc.match(/#[\p{L}\p{N}_]+/gu) || []).map(t => t.slice(1).toLowerCase());
 
   let toastTimer = 0;
   function toast(msg) {
@@ -838,189 +807,197 @@ svg { display: block; }
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
   }
-
-  function confirmDialog(text, yesLabel = 'Löschen') {
+  function confirmDialog(text, yes = 'Löschen') {
     return new Promise(resolve => {
       const box = $('#confirm');
       $('#confirmText').textContent = text;
-      $('#confirmYes').textContent = yesLabel;
+      $('#confirmYes').textContent = yes;
       box.classList.add('open');
-      const done = val => {
-        box.classList.remove('open');
-        $('#confirmYes').onclick = $('#confirmNo').onclick = box.onclick = null;
-        resolve(val);
-      };
+      const done = val => { box.classList.remove('open'); $('#confirmYes').onclick = $('#confirmNo').onclick = box.onclick = null; resolve(val); };
       $('#confirmYes').onclick = () => done(true);
       $('#confirmNo').onclick = () => done(false);
       box.onclick = e => { if (e.target === box) done(false); };
       $('#confirmNo').focus();
     });
   }
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch (_) {
+      const ta = el('textarea');
+      ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.append(ta); ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
+      ta.remove();
+      return ok;
+    }
+  }
 
-  /* =========================================================
-     APP-ZUSTAND
-     ========================================================= */
+  /* ================= Zustand ================= */
   const feedEl = $('#feed');
-  let allVideos = [];        // Seeds + Uploads
-  let visibleVideos = [];    // gefiltert ("Für dich" / "Folge ich")
-  let slides = [];           // DOM-Knoten parallel zu visibleVideos
+  const commentSheet = $('#commentSheet'), shareSheet = $('#shareSheet'), uploadSheet = $('#uploadSheet');
+  const discoverPage = $('#discoverPage'), mePage = $('#mePage'), creatorPage = $('#creatorPage');
+  let allVideos = [];
+  const videoById = new Map();
+  let feedItems = [];         // { key, v } – ein Video kann im Endlos-Feed mehrfach vorkommen
+  let slides = [];
   let activeIndex = -1;
-  let filter = 'all';
+  let mode = 'all';           // 'all' | 'following' | 'list'
+  let listCtx = null;         // { ids, title, returnTo, user }
+  let lastAllId = null;
+  let round = 0;
   let rafId = 0;
   let observer = null;
-  const objectUrls = new Map(); // id -> blob URL (wird beim Löschen freigegeben)
-  const PRELOAD_RADIUS = 1;     // Nachbarn, die vorgeladen werden
-  const KEEP_RADIUS = 2;        // außerhalb davon wird der Speicher freigegeben
+  let dbAvailable = true;
+  let openSheet = null;
+  let crUser = null;
+  const objectUrls = new Map();
+  const PRELOAD = 1, KEEP = 2;
 
-  const isLiked = v => !!Store.state.likes[v.id];
+  const S = () => Store.state;
+  const myName = () => S().profile.name || 'du';
+  const isOwn = v => !!v.own;
+  const isLiked = v => !!S().likes[v.id];
   const likeCount = v => v.likes + (isLiked(v) ? 1 : 0);
-  const userComments = v => Store.state.comments[v.id] || [];
+  const saveBase = v => (v.likes ? Math.round(v.likes / 9) : 0);
+  const userComments = v => S().comments[v.id] || [];
   const commentCount = v => v.comments.length + userComments(v).length;
-  const shareCount = v => v.shares + (Store.state.shares[v.id] || 0);
-  const isFollowing = user => !!Store.state.follows[user];
-  const myName = () => Store.state.profile.name || 'du';
+  const shareCount = v => v.shares + (S().shares[v.id] || 0);
+  const viewCount = v => v.views + (S().views[v.id] || 0);
+  const isFollowing = u => !!S().follows[u];
+  const creatorOf = u => CREATORS[u] || { name: u, bio: '', followers: 0, following: 0, verified: false };
+  const speedLabel = () => `${String(S().speed).replace('.', ',')}x`;
 
+  function blobUrl(key, blob) {
+    let u = objectUrls.get(key);
+    if (!u) { u = URL.createObjectURL(blob); objectUrls.set(key, u); }
+    return u;
+  }
   function uploadToVideo(rec) {
-    let url = objectUrls.get(rec.id);
-    if (!url) { url = URL.createObjectURL(rec.blob); objectUrls.set(rec.id, url); }
     return {
-      id: rec.id, user: myName(), verified: false, own: true,
-      desc: rec.desc || '', music: rec.music || `Originalton – ${myName()}`,
-      likes: 0, shares: 0, sources: [url], comments: [], createdAt: rec.createdAt,
+      id: rec.id, user: myName(), own: true, desc: rec.desc || '', music: rec.music || `Originalton – ${myName()}`,
+      likes: 0, views: 0, shares: 0, comments: [], createdAt: rec.createdAt,
+      sources: [blobUrl(rec.id, rec.blob)], poster: rec.thumb ? blobUrl(rec.id + ':thumb', rec.thumb) : '',
       blob: rec.blob, fileName: rec.name
     };
   }
+  function indexVideos() { videoById.clear(); allVideos.forEach(v => videoById.set(v.id, v)); }
 
-  /* =========================================================
-     SLIDE-RENDERING
-     ========================================================= */
+  /* ================= Slides ================= */
   function createSlide(v, index) {
     const s = el('article', 'slide loading');
     s.dataset.index = index;
-    s.dataset.id = v.id;
     s.setAttribute('aria-label', `Video von @${v.user}`);
 
     const video = el('video');
-    video.loop = true;
-    video.muted = Store.state.muted;
+    video.muted = S().muted;
+    video.loop = !S().autoNext;
     video.playsInline = true;
     video.setAttribute('playsinline', '');
     video.setAttribute('webkit-playsinline', '');
     video.preload = 'none';
     video.disablePictureInPicture = true;
+    if (v.poster) video.poster = v.poster;
     video.dataset.srcIndex = '-1';
 
-    s.append(
-      video,
-      el('div', 'spinner'),
-      el('div', 'error-box', `${ICON.broken}<div>Video konnte nicht geladen werden.<br>Prüfe deine Internetverbindung.</div>`),
-      el('div', 'tap-layer'),
-      el('div', 'shade'),
-      el('div', 'center-flash'),
-      el('div', 'paused-badge', ICON.play),
-      el('div', 'time-tip')
-    );
+    s.append(video, el('div', 'spinner'),
+      el('div', 'error-box', `${ICON.broken}<div>Video konnte nicht geladen werden.</div>`),
+      el('div', 'tap-layer'), el('div', 'shade-b'), el('div', 'center-flash'),
+      el('div', 'paused-badge', ICON.play), el('div', 'time-tip'));
+    if (S().speed !== 1) { const sp = el('div', 'speed-pill'); sp.textContent = speedLabel(); s.append(sp); }
 
-    // Rechte Aktionsleiste
     const actions = el('div', 'actions');
     const avWrap = el('div', 'avatar-wrap');
-    const av = el('div', 'avatar');
+    const av = el('button', 'avatar');
+    av.dataset.action = 'profile';
+    av.setAttribute('aria-label', `Profil von @${v.user}`);
     paintAvatar(av, v.user);
     avWrap.append(av);
-    if (!v.own) {
-      const fb = el('button', 'follow-btn' + (isFollowing(v.user) ? ' on' : ''), isFollowing(v.user) ? ICON.check : ICON.plus);
+    if (!isOwn(v)) {
+      const fb = el('button', 'follow-btn');
       fb.dataset.action = 'follow';
-      fb.setAttribute('aria-label', isFollowing(v.user) ? `@${v.user} entfolgen` : `@${v.user} folgen`);
+      setFollowBtn(fb, v.user);
       avWrap.append(fb);
     }
-    actions.append(avWrap);
-
-    const mkAct = (cls, icon, count, label) => {
+    const mk = (cls, icon, count, label) => {
       const b = el('button', `act ${cls}`);
       b.dataset.action = cls;
       b.setAttribute('aria-label', label);
       b.append(el('span', 'act-icon', icon));
-      const c = el('span', 'act-count'); c.textContent = count;
-      b.append(c);
+      const c = el('span', 'act-count'); c.textContent = count; b.append(c);
       return b;
     };
-    const likeBtn = mkAct('like', ICON.heart, formatCount(likeCount(v)), 'Gefällt mir');
-    if (isLiked(v)) likeBtn.classList.add('on');
-    likeBtn.setAttribute('aria-pressed', isLiked(v));
-    const saveBtn = mkAct('save', ICON.bookmark, Store.state.saves[v.id] ? 'Gespeichert' : 'Speichern', 'Speichern');
-    if (Store.state.saves[v.id]) saveBtn.classList.add('on');
-    actions.append(
-      likeBtn,
-      mkAct('comment', ICON.comment, formatCount(commentCount(v)), 'Kommentare'),
-      saveBtn,
-      mkAct('share', ICON.share, formatCount(shareCount(v)), 'Teilen')
-    );
-    const disc = el('div', 'disc');
-    const discInner = el('div', 'disc-inner');
-    paintAvatar(discInner, v.user);
-    disc.append(discInner);
-    actions.append(disc);
-    s.append(actions);
+    const like = mk('like', ICON.heart, formatCount(likeCount(v)), 'Gefällt mir');
+    like.classList.toggle('on', isLiked(v));
+    like.setAttribute('aria-pressed', isLiked(v));
+    const saved = !!S().saves[v.id];
+    const save = mk('save', ICON.bookmark, formatCount(saveBase(v) + (saved ? 1 : 0)), 'Speichern');
+    save.classList.toggle('on', saved);
+    const disc = el('button', 'disc');
+    disc.dataset.action = 'music';
+    disc.setAttribute('aria-label', `Musik: ${v.music}`);
+    const di = el('div', 'disc-inner'); paintAvatar(di, v.user); disc.append(di);
+    actions.append(avWrap, like, mk('comment', ICON.comment, formatCount(commentCount(v)), 'Kommentare'), save, mk('share', ICON.share, formatCount(shareCount(v)), 'Teilen'), disc);
+    s.append(actions, el('div', 'notes', '<span class="note">♪</span><span class="note">♫</span><span class="note">♪</span>'));
 
-    const notes = el('div', 'notes', '<span class="note">♪</span><span class="note">♫</span><span class="note">♪</span>');
-    s.append(notes);
-
-    // Info unten links
     const info = el('div', 'info');
-    const uname = el('div', 'username');
-    uname.textContent = '@' + v.user;
-    if (v.verified) uname.append(el('span', 'badge', '✓'));
-    if (v.own) { const b = el('span', 'badge'); b.textContent = 'Du'; uname.append(b); }
+    const uname = el('button', 'username');
+    uname.dataset.action = 'profile';
+    uname.textContent = isOwn(v) ? myName() : v.user;
+    if (creatorOf(v.user).verified) uname.insertAdjacentHTML('beforeend', ICON.verified);
+    if (isOwn(v)) { const b = el('span', 'you-badge'); b.textContent = 'Du'; uname.append(b); }
+    const dw = el('div', 'desc-wrap');
     const desc = el('div', 'desc');
-    renderRichText(desc, v.desc || ' ');
-    desc.dataset.action = 'expand';
+    renderRichText(desc, v.desc || '');
+    const more = el('button', 'more-btn'); more.textContent = 'mehr'; more.dataset.action = 'expand'; more.hidden = true;
+    dw.append(desc, more);
     const music = el('div', 'music', ICON.music);
-    const mq = el('div', 'marquee');
-    const mqText = el('span');
-    mqText.textContent = v.music;
-    mqText.dataset.text = v.music;
-    mq.append(mqText);
-    music.append(mq);
-    info.append(uname, desc, music);
+    const mq = el('div', 'marquee'); const mt = el('span'); mt.textContent = v.music; mt.dataset.text = v.music; mq.append(mt); music.append(mq);
+    info.append(uname, dw, music);
     s.append(info);
 
     const prog = el('div', 'progress', '<div class="progress-track"><div class="progress-fill"></div></div>');
-    prog.setAttribute('role', 'slider');
     prog.setAttribute('aria-label', 'Wiedergabeposition');
     s.append(prog);
 
-    wireVideoEvents(s, video, v);
-    wireTapLayer(s, $('.tap-layer', s));
+    wireVideo(s, video, v);
+    wireTap(s, $('.tap-layer', s));
     wireProgress(s, prog, video);
     return s;
   }
 
-  function wireVideoEvents(slide, video, v) {
+  function setFollowBtn(fb, user) {
+    const on = isFollowing(user);
+    fb.classList.toggle('on', on);
+    fb.innerHTML = on ? ICON.check : ICON.plus;
+    fb.setAttribute('aria-label', on ? `@${user} entfolgen` : `@${user} folgen`);
+  }
+
+  function wireVideo(slide, video, v) {
     video.addEventListener('waiting', () => slide.classList.add('loading'));
     video.addEventListener('canplay', () => slide.classList.remove('loading', 'error'));
-    video.addEventListener('playing', () => { slide.classList.add('playing'); slide.classList.remove('loading'); });
+    video.addEventListener('playing', () => { slide.classList.add('playing'); slide.classList.remove('loading'); hideSplash(); });
     video.addEventListener('pause', () => slide.classList.remove('playing'));
-    video.addEventListener('loadedmetadata', () => {
-      // Querformat-Videos nicht beschneiden, sondern komplett zeigen.
-      slide.classList.toggle('fit-contain', video.videoWidth > video.videoHeight * 1.05);
+    video.addEventListener('loadedmetadata', () => slide.classList.toggle('fit-contain', video.videoWidth > video.videoHeight * 1.05));
+    video.addEventListener('ended', () => {
+      if (Number(slide.dataset.index) !== activeIndex) return;
+      if (activeIndex < slides.length - 1) scrollToIndex(activeIndex + 1);
+      else { video.currentTime = 0; syncPlayback(); }
     });
     video.addEventListener('error', () => {
       if (!video.getAttribute('src')) return; // bewusst entladen
-      tryNextSource(slide, video, v);
+      const next = Number(video.dataset.srcIndex) + 1;
+      if (next < v.sources.length) {
+        video.dataset.srcIndex = String(next);
+        video.src = v.sources[next];
+        video.load();
+        if (Number(slide.dataset.index) === activeIndex) syncPlayback();
+      } else {
+        slide.classList.remove('loading', 'playing');
+        slide.classList.add('error');
+        hideSplash();
+      }
     });
-  }
-
-  function tryNextSource(slide, video, v) {
-    const next = Number(video.dataset.srcIndex) + 1;
-    if (next >= v.sources.length) {
-      slide.classList.remove('loading', 'playing');
-      slide.classList.add('error');
-      return;
-    }
-    video.dataset.srcIndex = String(next);
-    video.src = v.sources[next];
-    video.load();
-    if (Number(slide.dataset.index) === activeIndex) safePlay(video, slide);
   }
 
   function loadSlide(i) {
@@ -1028,13 +1005,11 @@ svg { display: block; }
     if (!s) return;
     const video = $('video', s);
     if (video.getAttribute('src')) return;
-    const v = visibleVideos[i];
     video.dataset.srcIndex = '0';
     video.preload = 'auto';
-    video.src = v.sources[0];
+    video.src = feedItems[i].v.sources[0];
     video.load();
   }
-
   function unloadSlide(i) {
     const s = slides[i];
     if (!s) return;
@@ -1042,75 +1017,65 @@ svg { display: block; }
     if (!video.getAttribute('src')) return;
     video.pause();
     video.removeAttribute('src');
-    video.load(); // gibt Puffer/Decoder frei
+    video.load(); // gibt Puffer und Decoder frei
     video.dataset.srcIndex = '-1';
     s.classList.add('loading');
     s.classList.remove('playing', 'paused', 'error');
   }
 
-  function safePlay(video, slide) {
-    video.muted = Store.state.muted;
-    const p = video.play();
-    if (p && p.catch) {
-      p.catch(err => {
+  // Eine zentrale Stelle entscheidet, ob das aktive Video laufen soll.
+  function syncPlayback() {
+    const pageOpen = !!$('.page.open');
+    document.body.classList.toggle('page-open', pageOpen);
+    const s = slides[activeIndex];
+    if (!s) return;
+    const video = $('video', s);
+    video.muted = S().muted;
+    video.playbackRate = video.defaultPlaybackRate = S().speed;
+    const want = !document.hidden && !pageOpen && openSheet !== uploadSheet && !s.classList.contains('paused');
+    if (want && video.paused) {
+      const p = video.play();
+      if (p && p.catch) p.catch(err => {
         if (err.name === 'NotAllowedError' && !video.muted) {
-          // Browser blockiert Autoplay mit Ton → stumm starten.
-          Store.state.muted = true; Store.save();
-          applyMute(false);
+          // Autoplay mit Ton blockiert → stumm weiter
+          S().muted = true; Store.save(); applyMute(false);
           video.play().catch(() => {});
-          toast('Tippe auf das Video, um den Ton einzuschalten');
-        } else if (err.name !== 'AbortError') {
-          console.warn('Wiedergabe fehlgeschlagen:', err);
-        }
+        } else if (err.name !== 'AbortError') console.warn('Wiedergabe fehlgeschlagen:', err);
       });
-    }
-    slide.classList.remove('paused');
+    } else if (!want && !video.paused) video.pause();
   }
 
-  /* =========================================================
-     AKTIVES VIDEO / OBSERVER
-     ========================================================= */
   function setActive(i) {
     if (i === activeIndex || !slides[i]) return;
     const prev = slides[activeIndex];
-    if (prev) {
-      const pv = $('video', prev);
-      pv.pause();
-      prev.classList.remove('paused');
-    }
+    if (prev) { $('video', prev).pause(); prev.classList.remove('paused'); }
     activeIndex = i;
-
+    if (mode === 'all' && i >= feedItems.length - 3) appendRound();
     for (let j = 0; j < slides.length; j++) {
       const d = Math.abs(j - i);
-      if (d <= PRELOAD_RADIUS) loadSlide(j);
-      else if (d > KEEP_RADIUS) unloadSlide(j);
+      if (d <= PRELOAD) loadSlide(j); else if (d > KEEP) unloadSlide(j);
     }
-
     const s = slides[i];
     const video = $('video', s);
-    if (video.readyState >= 1 && video.currentTime > 0 && !s.dataset.resume) video.currentTime = 0;
-    delete s.dataset.resume;
-    safePlay(video, s);
+    if (video.readyState >= 1 && video.currentTime > 0) video.currentTime = 0;
+    updateMoreButton(s);
+    const v = feedItems[i].v;
+    S().views[v.id] = (S().views[v.id] || 0) + 1;
+    Store.save();
+    if (mode === 'all') lastAllId = v.id;
+    syncPlayback();
     startProgressLoop();
     updateDeskNav();
   }
 
-  function setupObserver() {
-    if (observer) observer.disconnect();
-    observer = new IntersectionObserver(entries => {
-      for (const e of entries) {
-        if (e.isIntersecting && e.intersectionRatio >= 0.6) setActive(Number(e.target.dataset.index));
-      }
-    }, { root: feedEl, threshold: [0.6] });
-    slides.forEach(s => observer.observe(s));
+  function updateMoreButton(s) {
+    const d = $('.desc', s), more = $('.more-btn', s);
+    if (!$('.desc-wrap', s).classList.contains('expanded')) more.hidden = d.scrollHeight <= d.clientHeight + 2;
   }
-
   function scrollToIndex(i, smooth = true) {
     const s = slides[i];
-    if (!s) return;
-    feedEl.scrollTo({ top: s.offsetTop, behavior: smooth ? 'smooth' : 'auto' });
+    if (s) feedEl.scrollTo({ top: s.offsetTop, behavior: smooth ? 'smooth' : 'auto' });
   }
-
   function startProgressLoop() {
     cancelAnimationFrame(rafId);
     const tick = () => {
@@ -1124,93 +1089,123 @@ svg { display: block; }
     rafId = requestAnimationFrame(tick);
   }
 
-  function renderFeed(focusId) {
-    // Alte Slides freigeben
+  /* ================= Feed-Aufbau ================= */
+  function baseList() {
+    if (mode === 'following') return allVideos.filter(v => !isOwn(v) && isFollowing(v.user));
+    if (mode === 'list') return listCtx.ids.map(id => videoById.get(id)).filter(Boolean);
+    return allVideos.filter(v => !S().hidden[v.id]);
+  }
+
+  function addSlides(items) {
+    const frag = document.createDocumentFragment();
+    for (const it of items) {
+      const s = createSlide(it.v, feedItems.length);
+      feedItems.push(it);
+      slides.push(s);
+      frag.append(s);
+      if (observer) observer.observe(s);
+    }
+    feedEl.append(frag);
+  }
+
+  // Endlos-Feed: neue gemischte Runde anhängen, ohne dasselbe Video direkt zu wiederholen.
+  function appendRound() {
+    const pool = allVideos.filter(v => !S().hidden[v.id]);
+    if (pool.length < 2) return;
+    round++;
+    const next = shuffle(pool);
+    const last = feedItems[feedItems.length - 1];
+    if (last && next[0].id === last.v.id) next.push(next.shift());
+    addSlides(next.map(v => ({ key: `${v.id}#${round}`, v })));
+    updateDeskNav();
+  }
+
+  function renderFeed(startId) {
     slides.forEach((_, i) => unloadSlide(i));
     if (observer) observer.disconnect();
     feedEl.textContent = '';
-    activeIndex = -1;
+    feedItems = []; slides = []; activeIndex = -1; round = 0;
+    updateTopbar();
 
-    visibleVideos = filter === 'following'
-      ? allVideos.filter(v => isFollowing(v.user))
-      : allVideos.slice();
+    observer = new IntersectionObserver(entries => {
+      for (const e of entries) if (e.isIntersecting && e.intersectionRatio >= 0.6) setActive(Number(e.target.dataset.index));
+    }, { root: feedEl, threshold: [0.6] });
 
-    if (!visibleVideos.length) {
+    const base = baseList();
+    if (!base.length) {
       const empty = el('div', 'empty');
-      empty.innerHTML = filter === 'following'
-        ? '<div style="font-size:42px">👥</div><strong>Noch niemandem gefolgt</strong><div>Tippe im Feed auf das „+“ unter einem Profilbild.</div>'
-        : '<div style="font-size:42px">🎬</div><strong>Keine Videos</strong><div>Lade über das „+“ unten dein erstes Video hoch.</div>';
+      empty.innerHTML = mode === 'following'
+        ? '<div class="big">👥</div><strong>Noch niemandem gefolgt</strong><div>Tippe im Feed auf das „+“ unter einem Profilbild, dann siehst du die Videos hier.</div>'
+        : '<div class="big">🎬</div><strong>Keine Videos</strong><div>Lade über das „+“ unten dein erstes Video hoch.</div>';
       feedEl.append(empty);
-      slides = [];
       updateDeskNav();
+      hideSplash();
       return;
     }
-
-    const frag = document.createDocumentFragment();
-    slides = visibleVideos.map((v, i) => { const s = createSlide(v, i); frag.append(s); return s; });
-    feedEl.append(frag);
-
+    addSlides(base.map(v => ({ key: `${v.id}#0`, v })));
     let start = 0;
-    if (focusId) { const idx = visibleVideos.findIndex(v => v.id === focusId); if (idx >= 0) start = idx; }
+    if (startId) { const idx = feedItems.findIndex(it => it.v.id === startId); if (idx >= 0) start = idx; }
     feedEl.scrollTop = 0;
-    requestAnimationFrame(() => {
-      scrollToIndex(start, false);
-      setupObserver();
-      setActive(start);
-    });
+    requestAnimationFrame(() => { scrollToIndex(start, false); setActive(start); });
   }
 
   function updateDeskNav() {
     $('#prevBtn').disabled = activeIndex <= 0;
     $('#nextBtn').disabled = activeIndex < 0 || activeIndex >= slides.length - 1;
   }
+  function updateSlidesOf(id, fn) { slides.forEach((s, i) => { if (feedItems[i].v.id === id) fn(s, feedItems[i].v); }); }
 
-  /* =========================================================
-     TAP / DOPPELTIPP / GEDRÜCKT HALTEN
-     Einfacher Tipp = Ton an/aus · Doppeltipp = Like
-     Gedrückt halten = Pause (solange gehalten)
-     ========================================================= */
-  function wireTapLayer(slide, layer) {
-    const DOUBLE_MS = 280, HOLD_MS = 450, MOVE_TOL = 12;
-    let downX = 0, downY = 0, downAt = 0, moved = false, holdTimer = 0, heldPause = false;
-    let lastTap = 0, singleTimer = 0;
+  function updateTopbar() {
+    const inList = mode === 'list';
+    $('#tabs').hidden = inList;
+    $('#listTitle').hidden = !inList;
+    if (inList) $('#listTitle').textContent = listCtx.title;
+    const right = $('#topRightBtn');
+    right.innerHTML = ICON.search;
+    right.style.visibility = inList ? 'hidden' : '';
+    const left = $('#muteBtn');
+    left.innerHTML = inList ? ICON.back : (S().muted ? ICON.soundOff : ICON.soundOn);
+    left.setAttribute('aria-label', inList ? 'Zurück' : (S().muted ? 'Ton einschalten' : 'Ton ausschalten'));
+    $$('.tab').forEach(t => { const on = t.dataset.mode === mode; t.classList.toggle('active', on); t.setAttribute('aria-selected', on); });
+  }
 
+  /* ================= Gesten auf dem Video =================
+     Tippen: erst Ton an, danach Pause/Play · Doppeltipp: Like · Gedrückt halten: Menü */
+  function wireTap(slide, layer) {
+    const DOUBLE = 260, HOLD = 520, TOL = 12;
+    let x0 = 0, y0 = 0, t0 = 0, moved = false, holdTimer = 0, held = false, lastTap = 0, singleTimer = 0;
+    const videoOf = () => feedItems[Number(slide.dataset.index)].v;
     layer.addEventListener('pointerdown', e => {
       if (e.button !== 0) return;
-      downX = e.clientX; downY = e.clientY; downAt = performance.now(); moved = false; heldPause = false;
+      x0 = e.clientX; y0 = e.clientY; t0 = performance.now(); moved = false; held = false;
       clearTimeout(holdTimer);
       holdTimer = setTimeout(() => {
-        const v = $('video', slide);
-        if (!v.paused) { v.pause(); heldPause = true; slide.classList.add('paused'); }
-      }, HOLD_MS);
+        held = true;
+        if (navigator.vibrate) navigator.vibrate(15);
+        openShare(videoOf());
+      }, HOLD);
     });
     layer.addEventListener('pointermove', e => {
-      if (!downAt) return;
-      if (Math.abs(e.clientX - downX) > MOVE_TOL || Math.abs(e.clientY - downY) > MOVE_TOL) { moved = true; clearTimeout(holdTimer); }
+      if (t0 && (Math.abs(e.clientX - x0) > TOL || Math.abs(e.clientY - y0) > TOL)) { moved = true; clearTimeout(holdTimer); }
     });
     const end = e => {
       clearTimeout(holdTimer);
-      if (!downAt) return;
-      const dur = performance.now() - downAt;
-      downAt = 0;
-      if (heldPause) {
-        heldPause = false;
-        safePlay($('video', slide), slide);
-        return;
-      }
-      if (e.type === 'pointercancel' || moved || dur > HOLD_MS) return;
-
+      if (!t0) return;
+      t0 = 0;
+      if (held || moved || e.type === 'pointercancel') return;
       const now = performance.now();
-      if (now - lastTap < DOUBLE_MS) {
+      if (now - lastTap < DOUBLE) {
         clearTimeout(singleTimer);
         lastTap = 0;
         heartBurst(slide, e.clientX, e.clientY);
-        const v = visibleVideos[Number(slide.dataset.index)];
-        if (!isLiked(v)) toggleLike(slide, v);
-      } else {
-        lastTap = now;
-        singleTimer = setTimeout(() => { lastTap = 0; toggleMute(slide); }, DOUBLE_MS);
+        const v = videoOf();
+        if (!isLiked(v)) toggleLike(v);
+        return;
       }
+      lastTap = now;
+      // Ton direkt in der Geste einschalten (Browser verlangen das); Pause erst nach dem Doppeltipp-Fenster.
+      if (S().muted) { toggleMute(slide); return; }
+      singleTimer = setTimeout(() => { lastTap = 0; togglePause(slide); }, DOUBLE);
     };
     layer.addEventListener('pointerup', end);
     layer.addEventListener('pointercancel', end);
@@ -1219,7 +1214,7 @@ svg { display: block; }
 
   function heartBurst(slide, x, y) {
     const r = slide.getBoundingClientRect();
-    const h = el('div', 'burst', ICON.heartFilled);
+    const h = el('div', 'burst', ICON.heartFill);
     h.style.left = (x - r.left) + 'px';
     h.style.top = (y - r.top) + 'px';
     h.style.setProperty('--r', (Math.random() * 40 - 20).toFixed(0) + 'deg');
@@ -1227,170 +1222,109 @@ svg { display: block; }
     h.addEventListener('animationend', () => h.remove(), { once: true });
   }
 
-  /* =========================================================
-     FORTSCHRITTSBALKEN (Seek)
-     ========================================================= */
   function wireProgress(slide, bar, video) {
-    let dragging = false;
-    const seekTo = clientX => {
+    let drag = false;
+    const seek = cx => {
       const r = bar.getBoundingClientRect();
-      const ratio = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
-      if (video.duration) {
-        video.currentTime = ratio * video.duration;
-        $('.progress-fill', slide).style.width = ratio * 100 + '%';
-        $('.time-tip', slide).textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-      }
+      const ratio = Math.min(1, Math.max(0, (cx - r.left) / r.width));
+      if (!video.duration) return;
+      video.currentTime = ratio * video.duration;
+      $('.progress-fill', slide).style.width = ratio * 100 + '%';
+      $('.time-tip', slide).textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
     };
-    bar.addEventListener('pointerdown', e => {
-      e.stopPropagation();
-      dragging = true;
-      bar.setPointerCapture(e.pointerId);
-      bar.classList.add('drag');
-      slide.classList.add('seeking');
-      seekTo(e.clientX);
-    });
-    bar.addEventListener('pointermove', e => { if (dragging) seekTo(e.clientX); });
-    const stop = () => {
-      if (!dragging) return;
-      dragging = false;
-      bar.classList.remove('drag');
-      slide.classList.remove('seeking');
-    };
+    bar.addEventListener('pointerdown', e => { e.stopPropagation(); drag = true; bar.setPointerCapture(e.pointerId); bar.classList.add('drag'); slide.classList.add('seeking'); seek(e.clientX); });
+    bar.addEventListener('pointermove', e => { if (drag) seek(e.clientX); });
+    const stop = () => { if (!drag) return; drag = false; bar.classList.remove('drag'); slide.classList.remove('seeking'); };
     bar.addEventListener('pointerup', stop);
     bar.addEventListener('pointercancel', stop);
   }
 
-  /* =========================================================
-     INTERAKTIONEN
-     ========================================================= */
-  function applyMute(flash = true, slide = slides[activeIndex]) {
-    const m = Store.state.muted;
+  /* ================= Interaktionen ================= */
+  function flash(slide, icon) {
+    if (!slide) return;
+    const f = $('.center-flash', slide);
+    f.innerHTML = icon;
+    f.classList.remove('show'); void f.offsetWidth; f.classList.add('show');
+  }
+  function applyMute(showFlash = true, slide = slides[activeIndex]) {
+    const m = S().muted;
     slides.forEach(s => { $('video', s).muted = m; });
-    $('#muteBtn').innerHTML = m ? ICON.soundOff : ICON.soundOn;
-    $('#muteBtn').setAttribute('aria-label', m ? 'Ton einschalten' : 'Ton ausschalten');
-    if (flash && slide) {
-      const f = $('.center-flash', slide);
-      f.innerHTML = m ? ICON.soundOff : ICON.soundOn;
-      f.classList.remove('show'); void f.offsetWidth; f.classList.add('show');
-    }
+    $('#unmutePill').hidden = !m;
+    updateTopbar();
+    if (showFlash) flash(slide, m ? ICON.soundOff : ICON.soundOn);
   }
-
   function toggleMute(slide) {
-    Store.state.muted = !Store.state.muted;
+    S().muted = !S().muted;
     Store.save();
-    applyMute(true, slide);
-    // Falls das Video wegen Autoplay-Sperre pausiert war: mit Nutzergeste starten.
-    const s = slide || slides[activeIndex];
-    if (s) { const v = $('video', s); if (v.paused && !s.classList.contains('paused')) safePlay(v, s); }
+    applyMute(true, slide || slides[activeIndex]);
+    syncPlayback();
+  }
+  function togglePause(slide = slides[activeIndex]) {
+    if (!slide) return;
+    slide.classList.toggle('paused');
+    syncPlayback();
   }
 
-  function togglePause() {
-    const s = slides[activeIndex];
-    if (!s) return;
-    const v = $('video', s);
-    if (v.paused) safePlay(v, s);
-    else { v.pause(); s.classList.add('paused'); }
-  }
-
-  function toggleLike(slide, v) {
-    const liked = !isLiked(v);
-    if (liked) Store.state.likes[v.id] = Date.now(); else delete Store.state.likes[v.id];
+  function pop(btn) { btn.classList.remove('pop'); void btn.offsetWidth; btn.classList.add('pop'); }
+  function toggleLike(v) {
+    const on = !isLiked(v);
+    if (on) S().likes[v.id] = Date.now(); else delete S().likes[v.id];
     Store.save();
-    const btn = $('.act.like', slide);
-    btn.classList.toggle('on', liked);
-    btn.setAttribute('aria-pressed', liked);
-    $('.act-count', btn).textContent = formatCount(likeCount(v));
-    btn.classList.remove('pop'); void btn.offsetWidth; btn.classList.add('pop');
-    if (navigator.vibrate && liked) navigator.vibrate(12);
-  }
-
-  function toggleSave(slide, v) {
-    const on = !Store.state.saves[v.id];
-    if (on) Store.state.saves[v.id] = Date.now(); else delete Store.state.saves[v.id];
-    Store.save();
-    const btn = $('.act.save', slide);
-    btn.classList.toggle('on', on);
-    $('.act-count', btn).textContent = on ? 'Gespeichert' : 'Speichern';
-    btn.classList.remove('pop'); void btn.offsetWidth; btn.classList.add('pop');
-    toast(on ? 'Zu Gespeichert hinzugefügt' : 'Aus Gespeichert entfernt');
-  }
-
-  function toggleFollow(v) {
-    const on = !isFollowing(v.user);
-    if (on) Store.state.follows[v.user] = Date.now(); else delete Store.state.follows[v.user];
-    Store.save();
-    // Alle Slides desselben Nutzers aktualisieren
-    slides.forEach((s, i) => {
-      if (visibleVideos[i].user !== v.user) return;
-      const fb = $('.follow-btn', s);
-      if (!fb) return;
-      fb.classList.toggle('on', on);
-      fb.innerHTML = on ? ICON.check : ICON.plus;
-      fb.setAttribute('aria-label', on ? `@${v.user} entfolgen` : `@${v.user} folgen`);
+    updateSlidesOf(v.id, s => {
+      const b = $('.act.like', s);
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on);
+      $('.act-count', b).textContent = formatCount(likeCount(v));
+      pop(b);
     });
-    toast(on ? `Du folgst jetzt @${v.user}` : `Du folgst @${v.user} nicht mehr`);
+    if (on && navigator.vibrate) navigator.vibrate(12);
   }
-
-  async function share(slide, v) {
-    const text = `${v.desc} – @${v.user}`;
-    let shared = false;
-    try {
-      if (v.blob && navigator.canShare) {
-        const file = new File([v.blob], v.fileName || 'video.mp4', { type: v.blob.type || 'video/mp4' });
-        if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); shared = true; }
-      }
-      if (!shared && navigator.share && !v.blob) {
-        await navigator.share({ title: `@${v.user}`, text, url: v.sources[Number($('video', slide).dataset.srcIndex)] || v.sources[0] });
-        shared = true;
-      }
-    } catch (err) {
-      if (err.name === 'AbortError') return; // Nutzer hat abgebrochen
-    }
-    if (!shared) {
-      const payload = v.blob || !/^https?:/.test(v.sources[0]) ? text : `${text}\n${v.sources[0]}`;
-      shared = await copyText(payload);
-      toast(shared ? 'In die Zwischenablage kopiert' : 'Teilen nicht möglich');
-    }
-    if (shared) {
-      Store.state.shares[v.id] = (Store.state.shares[v.id] || 0) + 1;
-      Store.save();
-      $('.act.share .act-count', slide).textContent = formatCount(shareCount(v));
-    }
+  function toggleSave(v) {
+    const on = !S().saves[v.id];
+    if (on) S().saves[v.id] = Date.now(); else delete S().saves[v.id];
+    Store.save();
+    updateSlidesOf(v.id, s => {
+      const b = $('.act.save', s);
+      b.classList.toggle('on', on);
+      $('.act-count', b).textContent = formatCount(saveBase(v) + (on ? 1 : 0));
+      pop(b);
+    });
+    toast(on ? 'Zu „Gespeichert“ hinzugefügt' : 'Aus „Gespeichert“ entfernt');
   }
-
-  async function copyText(text) {
-    try { await navigator.clipboard.writeText(text); return true; }
-    catch (_) {
-      const ta = el('textarea');
-      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.append(ta); ta.select();
-      let ok = false;
-      try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
-      ta.remove();
-      return ok;
-    }
+  function toggleFollow(user) {
+    const on = !isFollowing(user);
+    if (on) S().follows[user] = Date.now(); else delete S().follows[user];
+    Store.save();
+    slides.forEach((s, i) => { const fb = $('.follow-btn', s); if (fb && feedItems[i].v.user === user) setFollowBtn(fb, user); });
+    if (crUser === user) renderCreator(user);
+    toast(on ? `Du folgst jetzt @${user}` : `Du folgst @${user} nicht mehr`);
   }
 
   feedEl.addEventListener('click', e => {
-    const target = e.target.closest('[data-action]');
-    if (!target) return;
-    const slide = target.closest('.slide');
-    const v = visibleVideos[Number(slide.dataset.index)];
-    switch (target.dataset.action) {
-      case 'like': toggleLike(slide, v); break;
-      case 'comment': openComments(v, slide); break;
-      case 'save': toggleSave(slide, v); break;
-      case 'share': share(slide, v); break;
-      case 'follow': toggleFollow(v); break;
-      case 'expand': target.classList.toggle('expanded'); break;
+    const t = e.target.closest('[data-action]');
+    if (!t) return;
+    const slide = t.closest('.slide');
+    const v = feedItems[Number(slide.dataset.index)].v;
+    switch (t.dataset.action) {
+      case 'like': toggleLike(v); break;
+      case 'comment': openComments(v); break;
+      case 'save': toggleSave(v); break;
+      case 'share': openShare(v); break;
+      case 'follow': toggleFollow(v.user); break;
+      case 'profile': if (isOwn(v)) openPage(mePage); else openCreator(v.user); break;
+      case 'expand': {
+        const open = $('.desc-wrap', slide).classList.toggle('expanded');
+        t.textContent = open ? 'weniger' : 'mehr';
+        break;
+      }
+      case 'hashtag': openSearch('#' + t.dataset.value); break;
+      case 'mention': if (CREATORS[t.dataset.value]) openCreator(t.dataset.value); else openSearch('@' + t.dataset.value); break;
+      case 'music': openSearch(v.music.split(' – ')[0]); break;
     }
   });
 
-  /* =========================================================
-     SHEETS (gemeinsame Logik inkl. Wisch-zum-Schließen)
-     ========================================================= */
+  /* ================= Sheets ================= */
   const backdrop = $('#sheetBackdrop');
-  let openSheet = null;
   let lastFocus = null;
 
   function showSheet(sheet) {
@@ -1400,6 +1334,7 @@ svg { display: block; }
     sheet.style.transform = '';
     sheet.classList.add('open');
     backdrop.classList.add('open');
+    syncPlayback();
   }
   function hideSheet(sheet = openSheet, silent = false) {
     if (!sheet) return;
@@ -1409,219 +1344,556 @@ svg { display: block; }
     if (openSheet === sheet) openSheet = null;
     sheet.dispatchEvent(new Event('sheetclose'));
     if (!silent && lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
+    syncPlayback();
   }
   backdrop.addEventListener('click', () => hideSheet());
-  document.querySelectorAll('.sheet').forEach(sheet => {
-    $('[data-close]', sheet).addEventListener('click', () => hideSheet(sheet));
+  $$('.sheet').forEach(sheet => {
+    $$('[data-close]', sheet).forEach(b => b.addEventListener('click', () => hideSheet(sheet)));
     const head = $('[data-drag]', sheet);
-    let startY = 0, dy = 0, dragging = false;
+    let y0 = 0, dy = 0, drag = false;
     head.addEventListener('pointerdown', e => {
       if (e.target.closest('[data-close]')) return;
-      dragging = true; startY = e.clientY; dy = 0;
+      drag = true; y0 = e.clientY; dy = 0;
       head.setPointerCapture(e.pointerId);
       sheet.classList.add('dragging');
     });
-    head.addEventListener('pointermove', e => {
-      if (!dragging) return;
-      dy = Math.max(0, e.clientY - startY);
-      sheet.style.transform = `translate(-50%, ${dy}px)`;
-    });
-    const end = () => {
-      if (!dragging) return;
-      dragging = false;
-      sheet.classList.remove('dragging');
-      if (dy > 110) hideSheet(sheet); else sheet.style.transform = '';
-    };
+    head.addEventListener('pointermove', e => { if (!drag) return; dy = Math.max(0, e.clientY - y0); sheet.style.transform = `translate(-50%, ${dy}px)`; });
+    const end = () => { if (!drag) return; drag = false; sheet.classList.remove('dragging'); if (dy > 100) hideSheet(sheet); else sheet.style.transform = ''; };
     head.addEventListener('pointerup', end);
     head.addEventListener('pointercancel', end);
   });
 
-  /* =========================================================
-     KOMMENTARE
-     ========================================================= */
-  const commentSheet = $('#commentSheet');
-  const commentList = $('#commentList');
-  const commentInput = $('#commentInput');
-  const commentSend = $('#commentSend');
-  let commentCtx = null; // { v, slide }
-  const seedBaseTime = Date.now();
+  /* ================= Kommentare ================= */
+  const commentList = $('#commentList'), commentInput = $('#commentInput'), commentSend = $('#commentSend');
+  let commentVideo = null;
+  const seedTime = Date.now();
 
-  function openComments(v, slide) {
-    commentCtx = { v, slide };
+  function openComments(v) {
+    commentVideo = v;
     renderComments();
     showSheet(commentSheet);
+    $('.sheet-body', commentSheet).scrollTop = 0;
     if (matchMedia('(hover: hover)').matches) setTimeout(() => commentInput.focus(), 350);
   }
-
   function renderComments() {
-    const { v } = commentCtx;
-    const mine = userComments(v).slice().reverse(); // neueste zuerst
-    const seed = v.comments.map((c, i) => ({ id: `${v.id}-s${i}`, user: c.user, text: c.text, ts: seedBaseTime - c.ago, likes: c.likes, seed: true }));
-    const items = [...mine.map(c => ({ ...c, user: myName(), mine: true, likes: 0 })), ...seed];
+    const v = commentVideo;
+    const mine = userComments(v).slice().reverse().map(c => ({ ...c, user: myName(), mine: true, likes: 0 }));
+    const seed = v.comments.map((c, i) => ({ id: `${v.id}-s${i}`, user: c.user, text: c.text, ts: seedTime - c.ago, likes: c.likes }))
+      .sort((a, b) => b.likes - a.likes);
+    const items = [...mine, ...seed];
     $('#commentTitle').textContent = `${formatCount(items.length)} Kommentar${items.length === 1 ? '' : 'e'}`;
     commentList.textContent = '';
     if (!items.length) {
-      const li = el('li', 'c-empty');
-      li.textContent = 'Noch keine Kommentare. Sei die erste Person, die kommentiert!';
+      const li = el('li', 'c-empty'); li.textContent = 'Noch keine Kommentare. Schreib den ersten!';
       commentList.append(li);
       return;
     }
     const frag = document.createDocumentFragment();
-    for (const c of items) frag.append(commentItem(c));
+    items.forEach(c => frag.append(commentItem(c, v)));
     commentList.append(frag);
   }
-
-  function commentItem(c) {
+  function commentItem(c, v) {
     const li = el('li', 'c-item');
-    li.dataset.id = c.id;
     const av = el('div', 'c-avatar'); paintAvatar(av, c.user);
     const main = el('div', 'c-main');
     const name = el('div', 'c-name'); name.textContent = c.user;
     if (c.mine) name.append(el('span', 'me', 'Du'));
+    else if (c.user === v.user) name.append(el('span', 'creator', 'Creator'));
     const text = el('div', 'c-text'); text.textContent = c.text;
     const meta = el('div', 'c-meta');
     const t = el('span'); t.textContent = timeAgo(c.ts);
-    meta.append(t);
-    if (c.mine) {
-      const del = el('button'); del.type = 'button'; del.textContent = 'Löschen'; del.dataset.del = c.id;
-      meta.append(del);
-    }
+    const reply = el('button'); reply.type = 'button'; reply.textContent = 'Antworten'; reply.dataset.reply = c.user;
+    meta.append(t, reply);
+    if (c.mine) { const del = el('button'); del.type = 'button'; del.textContent = 'Löschen'; del.dataset.del = c.id; meta.append(del); }
     main.append(name, text, meta);
-    const liked = !!Store.state.commentLikes[c.id];
-    const like = el('button', 'c-like' + (liked ? ' on' : ''), liked ? ICON.heartFilled : ICON.heartSmall);
-    like.type = 'button';
-    like.dataset.clike = c.id;
-    like.dataset.base = c.likes;
+    const liked = !!S().commentLikes[c.id];
+    const like = el('button', 'c-like' + (liked ? ' on' : ''), liked ? ICON.heartFill : ICON.heartLine);
+    like.type = 'button'; like.dataset.clike = c.id; like.dataset.base = c.likes;
     like.setAttribute('aria-label', 'Kommentar liken');
-    const cnt = el('span'); cnt.textContent = formatCount(c.likes + (liked ? 1 : 0));
-    like.append(cnt);
+    const cnt = el('span'); cnt.textContent = formatCount(c.likes + (liked ? 1 : 0)); like.append(cnt);
     li.append(av, main, like);
     return li;
   }
-
   commentList.addEventListener('click', async e => {
-    const likeBtn = e.target.closest('[data-clike]');
-    if (likeBtn) {
-      const id = likeBtn.dataset.clike;
-      const on = !Store.state.commentLikes[id];
-      if (on) Store.state.commentLikes[id] = 1; else delete Store.state.commentLikes[id];
+    const lb = e.target.closest('[data-clike]');
+    if (lb) {
+      const id = lb.dataset.clike, on = !S().commentLikes[id];
+      if (on) S().commentLikes[id] = 1; else delete S().commentLikes[id];
       Store.save();
-      likeBtn.classList.toggle('on', on);
-      likeBtn.innerHTML = on ? ICON.heartFilled : ICON.heartSmall;
-      const cnt = el('span'); cnt.textContent = formatCount(Number(likeBtn.dataset.base) + (on ? 1 : 0));
-      likeBtn.append(cnt);
+      lb.classList.toggle('on', on);
+      lb.innerHTML = on ? ICON.heartFill : ICON.heartLine;
+      const cnt = el('span'); cnt.textContent = formatCount(Number(lb.dataset.base) + (on ? 1 : 0)); lb.append(cnt);
       return;
     }
-    const delBtn = e.target.closest('[data-del]');
-    if (delBtn && commentCtx) {
+    const rb = e.target.closest('[data-reply]');
+    if (rb) {
+      commentInput.value = `@${rb.dataset.reply} `;
+      autoGrow();
+      commentInput.focus();
+      commentInput.setSelectionRange(commentInput.value.length, commentInput.value.length);
+      return;
+    }
+    const db = e.target.closest('[data-del]');
+    if (db && commentVideo) {
       if (!(await confirmDialog('Diesen Kommentar löschen?'))) return;
-      const { v } = commentCtx;
-      Store.state.comments[v.id] = userComments(v).filter(c => c.id !== delBtn.dataset.del);
-      if (!Store.state.comments[v.id].length) delete Store.state.comments[v.id];
-      delete Store.state.commentLikes[delBtn.dataset.del];
+      const v = commentVideo;
+      S().comments[v.id] = userComments(v).filter(c => c.id !== db.dataset.del);
+      if (!S().comments[v.id].length) delete S().comments[v.id];
+      delete S().commentLikes[db.dataset.del];
       Store.save();
       renderComments();
-      updateCommentCount();
+      refreshCommentCount(v);
     }
   });
-
-  function updateCommentCount() {
-    const { v, slide } = commentCtx;
-    if (slide.isConnected) $('.act.comment .act-count', slide).textContent = formatCount(commentCount(v));
-  }
-
+  function refreshCommentCount(v) { updateSlidesOf(v.id, s => { $('.act.comment .act-count', s).textContent = formatCount(commentCount(v)); }); }
   function autoGrow() {
     commentInput.style.height = 'auto';
     commentInput.style.height = Math.min(commentInput.scrollHeight, 120) + 'px';
     commentSend.disabled = !commentInput.value.trim();
   }
   commentInput.addEventListener('input', autoGrow);
-  commentInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('#commentForm').requestSubmit(); }
-  });
+  commentInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('#commentForm').requestSubmit(); } });
   $('#commentForm').addEventListener('submit', e => {
     e.preventDefault();
     const text = commentInput.value.trim();
-    if (!text || !commentCtx) return;
-    const { v } = commentCtx;
-    (Store.state.comments[v.id] ||= []).push({ id: uid(), text, ts: Date.now() });
+    if (!text || !commentVideo) return;
+    const v = commentVideo;
+    (S().comments[v.id] ||= []).push({ id: uid(), text, ts: Date.now() });
     Store.save();
     commentInput.value = '';
     autoGrow();
     renderComments();
-    updateCommentCount();
+    refreshCommentCount(v);
     $('.sheet-body', commentSheet).scrollTop = 0;
   });
-  commentSheet.addEventListener('sheetclose', () => { commentInput.blur(); });
+  commentSheet.addEventListener('sheetclose', () => commentInput.blur());
 
-  /* =========================================================
-     UPLOAD
-     ========================================================= */
-  const uploadSheet = $('#uploadSheet');
-  const uploadForm = $('#uploadForm');
-  const fileInput = $('#fileInput');
-  const dropZone = $('#dropZone');
-  const previewVideo = $('#previewVideo');
-  const publishBtn = $('#publishBtn');
-  const MAX_BYTES = 1024 ** 3; // 1 GB pro Video
-  let pendingFile = null;
-  let previewUrl = null;
-  let dbAvailable = true;
+  /* ================= Teilen & Menü ================= */
+  let shareVideo = null;
+  const SPEEDS = [0.5, 1, 1.5, 2];
+
+  const shareText = v => `${v.desc ? v.desc + '\n' : ''}– @${isOwn(v) ? myName() : v.user} auf ClipFeed 🎬`;
+  function countShare(v) {
+    S().shares[v.id] = (S().shares[v.id] || 0) + 1;
+    Store.save();
+    updateSlidesOf(v.id, s => { $('.act.share .act-count', s).textContent = formatCount(shareCount(v)); });
+  }
+  function shareItem(icon, label, color, opts = {}) {
+    const node = el(opts.href ? 'a' : 'button', 'share-item' + (opts.cls ? ' ' + opts.cls : ''));
+    if (opts.href) { node.href = opts.href; node.target = '_blank'; node.rel = 'noopener noreferrer'; }
+    else node.type = 'button';
+    const c = el('span', 'circle', icon);
+    if (color) c.style.background = color;
+    const l = el('span'); l.textContent = label;
+    node.append(c, l);
+    if (opts.onClick) node.addEventListener('click', opts.onClick);
+    return node;
+  }
+
+  function openShare(v) {
+    shareVideo = v;
+    const text = shareText(v);
+    const enc = encodeURIComponent(text);
+    const viaLink = () => { countShare(v); hideSheet(shareSheet); };
+    const targets = $('#shareTargets');
+    targets.textContent = '';
+    targets.append(
+      shareItem(ICON.copy, 'Text kopieren', '#3a3a40', { onClick: async () => {
+        const ok = await copyText(text);
+        toast(ok ? 'In die Zwischenablage kopiert' : 'Kopieren hat nicht geklappt');
+        if (ok) countShare(v);
+        hideSheet(shareSheet);
+      } }),
+      shareItem(ICON.whatsapp, 'WhatsApp', '#25d366', { href: `https://wa.me/?text=${enc}`, onClick: viaLink }),
+      shareItem(ICON.telegram, 'Telegram', '#2aa3e0', { href: `https://t.me/share/url?url=${enc}`, onClick: viaLink }),
+      shareItem(ICON.xlogo, 'X', '#000', { href: `https://x.com/intent/post?text=${enc}`, onClick: viaLink })
+    );
+    if (navigator.share) {
+      targets.append(shareItem(ICON.more, 'Mehr …', '#3a3a40', { onClick: async () => {
+        try {
+          const data = { text };
+          if (v.blob && navigator.canShare) {
+            const file = new File([v.blob], v.fileName || 'video.mp4', { type: v.blob.type || 'video/mp4' });
+            if (navigator.canShare({ files: [file] })) data.files = [file];
+          }
+          await navigator.share(data);
+          countShare(v);
+          hideSheet(shareSheet);
+        } catch (err) {
+          if (err.name !== 'AbortError') toast('Das Teilen-Menü ist hier nicht verfügbar. Nutze „Text kopieren“.');
+        }
+      } }));
+    }
+    renderShareActions();
+    showSheet(shareSheet);
+  }
+
+  function renderShareActions() {
+    const v = shareVideo;
+    const box = $('#shareActions');
+    box.textContent = '';
+    const saved = !!S().saves[v.id];
+    box.append(
+      shareItem(ICON.bookmarkLine, saved ? 'Gespeichert' : 'Speichern', null, { cls: saved ? 'on' : '', onClick: () => { toggleSave(v); renderShareActions(); } }),
+      shareItem(ICON.speed, `Tempo ${speedLabel()}`, null, { cls: S().speed !== 1 ? 'active' : '', onClick: () => {
+        S().speed = SPEEDS[(SPEEDS.indexOf(S().speed) + 1) % SPEEDS.length];
+        Store.save();
+        applySpeed();
+        renderShareActions();
+      } }),
+      shareItem(ICON.autoNext, S().autoNext ? 'Auto-Weiter an' : 'Auto-Weiter aus', null, { cls: S().autoNext ? 'active' : '', onClick: () => {
+        S().autoNext = !S().autoNext;
+        Store.save();
+        slides.forEach(s => { $('video', s).loop = !S().autoNext; });
+        toast(S().autoNext ? 'Nächstes Video startet automatisch' : 'Videos laufen in Schleife');
+        renderShareActions();
+      } })
+    );
+    if (isOwn(v)) {
+      box.append(shareItem(ICON.trash, 'Löschen', null, { onClick: () => { hideSheet(shareSheet); deleteUpload(v.id); } }));
+    } else {
+      box.append(shareItem(ICON.ban, 'Nicht interessiert', null, { onClick: () => {
+        S().hidden[v.id] = Date.now();
+        Store.save();
+        hideSheet(shareSheet);
+        toast('Okay, dieses Video wird dir nicht mehr gezeigt');
+        if (mode === 'all') {
+          if (activeIndex >= slides.length - 1) appendRound();
+          scrollToIndex(activeIndex + 1);
+        }
+      } }));
+    }
+  }
+
+  function applySpeed() {
+    const sp = S().speed;
+    slides.forEach(s => {
+      const video = $('video', s);
+      video.playbackRate = video.defaultPlaybackRate = sp;
+      let pill = $('.speed-pill', s);
+      if (sp === 1) { if (pill) pill.remove(); return; }
+      if (!pill) { pill = el('div', 'speed-pill'); s.append(pill); }
+      pill.textContent = speedLabel();
+    });
+  }
+
+  /* ================= Seiten ================= */
+  function setNav(name) { $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.nav === name)); }
+  function openPage(page) {
+    hideSheet();
+    [discoverPage, mePage].forEach(p => { if (p !== page) p.classList.remove('open'); });
+    creatorPage.classList.remove('open');
+    crUser = null;
+    if (page === discoverPage) { renderDiscover(); setNav('discover'); }
+    if (page === mePage) { renderMe(); setNav('me'); }
+    page.classList.add('open');
+    syncPlayback();
+  }
+  function closePages() {
+    $$('.page.open').forEach(p => p.classList.remove('open'));
+    crUser = null;
+    setNav('home');
+    $$('.grid-item video').forEach(v => { v.removeAttribute('src'); v.load(); });
+    syncPlayback();
+  }
+  function closeTopPage() {
+    if (creatorPage.classList.contains('open')) {
+      creatorPage.classList.remove('open');
+      crUser = null;
+      if (!$('.page.open')) setNav('home');
+      syncPlayback();
+      return true;
+    }
+    if ($('.page.open')) { closePages(); return true; }
+    return false;
+  }
+
+  function gridItem(v, opts = {}) {
+    const item = el('button', 'grid-item');
+    item.type = 'button';
+    item.dataset.id = v.id;
+    item.setAttribute('aria-label', `Video von @${isOwn(v) ? myName() : v.user}`);
+    if (v.poster) {
+      const img = el('img'); img.src = v.poster; img.alt = ''; img.loading = 'lazy'; item.append(img);
+    } else {
+      const vid = el('video');
+      vid.muted = true; vid.preload = 'metadata'; vid.playsInline = true;
+      vid.addEventListener('loadedmetadata', () => { vid.currentTime = Math.min(0.5, (vid.duration || 1) / 2); }, { once: true });
+      vid.src = v.sources[0];
+      item.append(vid);
+    }
+    const views = el('div', 'g-views', ICON.playSmall);
+    const n = el('span'); n.textContent = formatCount(viewCount(v)); views.append(n);
+    item.append(views);
+    if (opts.deletable) {
+      const del = el('span', 'g-del', ICON.trash);
+      del.dataset.del = v.id;
+      del.setAttribute('role', 'button');
+      del.setAttribute('aria-label', 'Video löschen');
+      item.append(del);
+    }
+    return item;
+  }
+  function fillGrid(grid, list, emptyText, opts) {
+    grid.textContent = '';
+    if (!list.length) { const e = el('div', 'grid-empty'); e.textContent = emptyText; grid.append(e); return; }
+    const frag = document.createDocumentFragment();
+    list.forEach(v => frag.append(gridItem(v, opts)));
+    grid.append(frag);
+  }
+  // Ein Tipp auf ein Vorschaubild spielt genau diese Liste als Feed ab.
+  function wireGrid(grid, titleFn, returnTo, userFn) {
+    grid.addEventListener('click', e => {
+      const del = e.target.closest('[data-del]');
+      if (del) { e.stopPropagation(); deleteUpload(del.dataset.del); return; }
+      const item = e.target.closest('.grid-item');
+      if (!item) return;
+      const ids = $$('.grid-item', grid).map(n => n.dataset.id);
+      openList(ids, titleFn(), item.dataset.id, returnTo, userFn && userFn());
+    });
+  }
+
+  function openList(ids, title, startId, returnTo, user) {
+    if (mode === 'all' && feedItems[activeIndex]) lastAllId = feedItems[activeIndex].v.id;
+    mode = 'list';
+    listCtx = { ids, title, returnTo, user };
+    closePages();
+    renderFeed(startId);
+  }
+  function leaveList() {
+    const { returnTo, user } = listCtx || {};
+    mode = 'all';
+    listCtx = null;
+    renderFeed(lastAllId);
+    if (returnTo === 'creator' && user) openCreator(user);
+    else if (returnTo === 'discover') openPage(discoverPage);
+    else if (returnTo === 'me') openPage(mePage);
+  }
+
+  /* --- Entdecken --- */
+  const searchInput = $('#searchInput');
+  function renderDiscover() {
+    const counts = new Map();
+    allVideos.forEach(v => tagsOf(v).forEach(t => counts.set(t, (counts.get(t) || 0) + viewCount(v))));
+    const chips = $('#trendChips'); chips.textContent = '';
+    [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).forEach(([tag, views]) => {
+      const c = el('button', 'chip');
+      c.type = 'button';
+      c.dataset.tag = tag;
+      c.append(el('span', 'hash', '#'));
+      const t = el('span'); t.textContent = tag;
+      const s = el('small'); s.textContent = formatCount(views);
+      c.append(t, s);
+      chips.append(c);
+    });
+    const row = $('#creatorRow'); row.textContent = '';
+    Object.entries(CREATORS).sort((a, b) => b[1].followers - a[1].followers).forEach(([user]) => {
+      const card = el('button', 'creator-card');
+      card.type = 'button';
+      card.dataset.user = user;
+      const av = el('div', 'avatar'); paintAvatar(av, user);
+      const n = el('span'); n.textContent = user;
+      card.append(av, n);
+      row.append(card);
+    });
+    fillGrid($('#popularGrid'), allVideos.filter(v => !isOwn(v)).sort((a, b) => likeCount(b) - likeCount(a)), 'Keine Videos');
+    runSearch();
+  }
+  function runSearch() {
+    const raw = searchInput.value.trim();
+    const q = raw.toLowerCase();
+    $('#searchClear').hidden = !q;
+    $('#discoverHome').hidden = !!q;
+    $('#discoverResults').hidden = !q;
+    if (!q) return;
+    const term = q.replace(/^[#@]/, '');
+    const users = q.startsWith('#') ? [] : Object.entries(CREATORS).filter(([u, c]) => u.includes(term) || c.name.toLowerCase().includes(term));
+    const vids = allVideos.filter(v => {
+      if (q.startsWith('#')) return tagsOf(v).some(t => t.startsWith(term));
+      return [v.desc, v.music, isOwn(v) ? myName() : v.user].some(f => f.toLowerCase().includes(term));
+    });
+    const ur = $('#userResults'); ur.textContent = '';
+    if (users.length) {
+      const title = el('div', 'section-title'); title.textContent = 'Nutzer';
+      const list = el('div', 'user-list');
+      users.forEach(([u, c]) => {
+        const r = el('button', 'user-row'); r.type = 'button'; r.dataset.user = u;
+        const av = el('div', 'avatar'); paintAvatar(av, u);
+        const d = el('div'); const b = el('b'); b.textContent = u;
+        const s = el('small'); s.textContent = `${c.name} · ${formatCount(c.followers + (isFollowing(u) ? 1 : 0))} Follower`;
+        d.append(b, s); r.append(av, d); list.append(r);
+      });
+      ur.append(title, list);
+    }
+    $('#videoResultsTitle').textContent = `Videos (${vids.length})`;
+    fillGrid($('#videoResults'), vids, `Keine Videos zu „${raw}“. Probier einen Hashtag aus den Trends.`);
+  }
+  function openSearch(q) {
+    openPage(discoverPage);
+    searchInput.value = q;
+    runSearch();
+  }
+  searchInput.addEventListener('input', runSearch);
+  searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchInput.blur(); });
+  $('#searchClear').addEventListener('click', () => { searchInput.value = ''; runSearch(); searchInput.focus(); });
+  discoverPage.addEventListener('click', e => {
+    const chip = e.target.closest('[data-tag]');
+    if (chip) { searchInput.value = '#' + chip.dataset.tag; runSearch(); return; }
+    const u = e.target.closest('[data-user]');
+    if (u) openCreator(u.dataset.user);
+  });
+  wireGrid($('#popularGrid'), () => 'Beliebt', 'discover');
+  wireGrid($('#videoResults'), () => searchInput.value.trim(), 'discover');
+
+  /* --- Creator-Profil --- */
+  function openCreator(user) {
+    hideSheet();
+    crUser = user;
+    renderCreator(user);
+    creatorPage.classList.add('open');
+    $('.page-body', creatorPage).scrollTop = 0;
+    syncPlayback();
+  }
+  function renderCreator(user) {
+    const c = creatorOf(user);
+    const vids = allVideos.filter(v => !isOwn(v) && v.user === user);
+    $('#crHandle').textContent = c.name;
+    paintAvatar($('#crAvatar'), user);
+    const nm = $('#crName');
+    nm.textContent = '@' + user;
+    if (c.verified) nm.insertAdjacentHTML('beforeend', ICON.verified);
+    $('#crFollowing').textContent = formatCount(c.following);
+    $('#crFollowers').textContent = formatCount(c.followers + (isFollowing(user) ? 1 : 0));
+    $('#crLikes').textContent = formatCount(vids.reduce((n, v) => n + likeCount(v), 0));
+    $('#crBio').textContent = c.bio;
+    const fb = $('#crFollow');
+    const on = isFollowing(user);
+    fb.textContent = on ? 'Gefolgt' : 'Folgen';
+    fb.className = 'btn ' + (on ? 'btn-secondary' : 'btn-primary');
+    fillGrid($('#crGrid'), vids, 'Noch keine Videos');
+  }
+  $('#crFollow').addEventListener('click', () => { if (crUser) toggleFollow(crUser); });
+  $('#creatorBack').addEventListener('click', closeTopPage);
+  wireGrid($('#crGrid'), () => '@' + crUser, 'creator', () => crUser);
+
+  /* --- Eigenes Profil --- */
+  let meTab = 'videos';
+  const ME_TITLES = { videos: 'Meine Videos', saved: 'Gespeichert', liked: 'Gefällt mir' };
+  async function renderMe() {
+    const name = myName();
+    $('#meHandle').textContent = '@' + name;
+    paintAvatar($('#meAvatar'), name);
+    $('#meName').value = name;
+    $('#meBio').value = S().profile.bio || '';
+    const mine = allVideos.filter(isOwn);
+    $('#meFollowing').textContent = Object.keys(S().follows).length;
+    $('#meFollowers').textContent = '0';
+    $('#meLikes').textContent = formatCount(mine.reduce((n, v) => n + likeCount(v), 0));
+    $$('.ptab').forEach(t => t.classList.toggle('active', t.dataset.ptab === meTab));
+    const grid = $('#meGrid');
+    if (meTab === 'videos') fillGrid(grid, mine, 'Du hast noch keine Videos gepostet. Tippe auf „Video hochladen“.', { deletable: true });
+    if (meTab === 'saved') fillGrid(grid, allVideos.filter(v => S().saves[v.id]).sort((a, b) => S().saves[b.id] - S().saves[a.id]), 'Gespeicherte Videos erscheinen hier.');
+    if (meTab === 'liked') fillGrid(grid, allVideos.filter(v => S().likes[v.id]).sort((a, b) => S().likes[b.id] - S().likes[a.id]), 'Videos, die dir gefallen, erscheinen hier.');
+    const info = $('#storageInfo');
+    info.textContent = dbAvailable ? 'Deine Videos bleiben nur in diesem Browser auf diesem Gerät gespeichert.' : 'Dieser Browser erlaubt keinen dauerhaften Speicher. Uploads verschwinden beim Neuladen.';
+    if (navigator.storage && navigator.storage.estimate) {
+      try { const { usage, quota } = await navigator.storage.estimate(); if (quota) info.textContent += ` Belegt: ${formatBytes(usage || 0)} von ca. ${formatBytes(quota)}.`; } catch (_) { /* optional */ }
+    }
+  }
+  $$('.ptab').forEach(t => t.addEventListener('click', () => { meTab = t.dataset.ptab; renderMe(); }));
+  wireGrid($('#meGrid'), () => ME_TITLES[meTab], 'me');
+  $('#meUpload').addEventListener('click', () => openUpload());
+  $('#meName').addEventListener('change', () => {
+    const input = $('#meName');
+    const clean = input.value.trim().replace(/\s+/g, '_').replace(/[^\p{L}\p{N}_.]/gu, '').slice(0, 24);
+    if (!clean) { input.value = myName(); return; }
+    S().profile.name = clean;
+    Store.save();
+    allVideos.forEach(v => { if (isOwn(v)) { v.user = clean; if (v.music.startsWith('Originalton – ')) v.music = `Originalton – ${clean}`; } });
+    renderMe();
+    const cur = feedItems[activeIndex] && feedItems[activeIndex].v.id;
+    renderFeed(cur);
+    toast('Name gespeichert');
+  });
+  $('#meName').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+  $('#meBio').addEventListener('change', e => { S().profile.bio = e.target.value.trim(); Store.save(); toast('Bio gespeichert'); });
+
+  /* ================= Upload ================= */
+  const uploadForm = $('#uploadForm'), fileInput = $('#fileInput'), dropZone = $('#dropZone'), previewVideo = $('#previewVideo'), publishBtn = $('#publishBtn');
+  const MAX_BYTES = 1024 ** 3;
+  let pendingFile = null, pendingThumb = null, previewUrl = null;
 
   function resetUpload() {
-    pendingFile = null;
+    pendingFile = null; pendingThumb = null;
     if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
-    previewVideo.removeAttribute('src');
-    previewVideo.load();
+    previewVideo.removeAttribute('src'); previewVideo.load();
     uploadForm.reset();
     uploadForm.classList.remove('has-file');
     $('#fileMeta').textContent = '';
     $('#descCount').textContent = '0/300';
     publishBtn.disabled = true;
-    publishBtn.textContent = 'Veröffentlichen';
+    publishBtn.textContent = 'Posten';
   }
-
   function openUpload() {
     resetUpload();
     $('#upMusic').placeholder = `Originalton – ${myName()}`;
+    const sug = $('#tagSuggest'); sug.textContent = '';
+    ['fyp', 'foryou', 'viral', 'trend', 'aesthetic'].forEach(t => { const b = el('button'); b.type = 'button'; b.textContent = '#' + t; b.dataset.addtag = t; sug.append(b); });
     showSheet(uploadSheet);
-    // Aktives Video pausieren, damit die Vorschau nicht konkurriert
-    const s = slides[activeIndex];
-    if (s) $('video', s).pause();
   }
-  uploadSheet.addEventListener('sheetclose', () => {
-    previewVideo.pause();
-    const s = slides[activeIndex];
-    if (s && !openSheet && !s.classList.contains('paused')) safePlay($('video', s), s);
+  uploadSheet.addEventListener('sheetclose', () => previewVideo.pause());
+  $('#tagSuggest').addEventListener('click', e => {
+    const b = e.target.closest('[data-addtag]');
+    if (!b) return;
+    const d = $('#upDesc');
+    const tag = '#' + b.dataset.addtag;
+    if (!d.value.includes(tag)) d.value = (d.value.trim() + ' ' + tag).trim().slice(0, 300);
+    $('#descCount').textContent = `${d.value.length}/300`;
+    b.remove();
   });
+
+  // Vorschaubild aus dem Video erzeugen und mitspeichern.
+  function captureThumb(video) {
+    return new Promise(resolve => {
+      const timer = setTimeout(() => resolve(null), 4000);
+      video.addEventListener('seeked', () => {
+        clearTimeout(timer);
+        try {
+          const w = 270, h = 480, c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          const vw = video.videoWidth, vh = video.videoHeight;
+          const scale = Math.max(w / vw, h / vh);
+          c.getContext('2d').drawImage(video, (w - vw * scale) / 2, (h - vh * scale) / 2, vw * scale, vh * scale);
+          c.toBlob(b => resolve(b), 'image/jpeg', 0.75);
+        } catch (_) { resolve(null); }
+      }, { once: true });
+      video.currentTime = Math.min(1, (video.duration || 2) / 3);
+    });
+  }
 
   function acceptFile(file) {
     if (!file) return;
-    if (!file.type.startsWith('video/') && !/\.(mp4|m4v|webm|mov)$/i.test(file.name)) { toast('Bitte eine Videodatei auswählen'); return; }
+    if (!file.type.startsWith('video/') && !/\.(mp4|m4v|webm|mov)$/i.test(file.name)) { toast('Bitte wähle eine Videodatei aus'); return; }
     if (file.size > MAX_BYTES) { toast(`Datei zu groß (max. ${formatBytes(MAX_BYTES)})`); return; }
-    const probeUrl = URL.createObjectURL(file);
+    const url = URL.createObjectURL(file);
     const probe = document.createElement('video');
-    probe.preload = 'metadata';
-    probe.muted = true;
-    probe.onloadedmetadata = () => {
+    probe.preload = 'auto'; probe.muted = true; probe.playsInline = true;
+    probe.onloadedmetadata = async () => {
       pendingFile = file;
       if (previewUrl) URL.revokeObjectURL(previewUrl);
-      previewUrl = probeUrl;
-      previewVideo.src = previewUrl;
+      previewUrl = url;
+      previewVideo.src = url;
       previewVideo.play().catch(() => {});
       uploadForm.classList.add('has-file');
-      const dims = probe.videoWidth ? ` · ${probe.videoWidth}×${probe.videoHeight}` : '';
-      $('#fileMeta').textContent = `${file.name} · ${formatBytes(file.size)} · ${formatTime(probe.duration)}${dims}`;
+      $('#fileMeta').textContent = `${file.name} · ${formatBytes(file.size)} · ${formatTime(probe.duration)}${probe.videoWidth ? ` · ${probe.videoWidth}×${probe.videoHeight}` : ''}`;
       publishBtn.disabled = false;
+      const thumb = await captureThumb(probe);
+      if (pendingFile === file) pendingThumb = thumb;
       probe.removeAttribute('src');
     };
-    probe.onerror = () => {
-      URL.revokeObjectURL(probeUrl);
-      toast('Dieses Videoformat wird von deinem Browser nicht unterstützt');
-    };
-    probe.src = probeUrl;
+    probe.onerror = () => { URL.revokeObjectURL(url); toast('Dieses Videoformat kann dein Browser nicht abspielen'); };
+    probe.src = url;
   }
-
   dropZone.addEventListener('click', () => fileInput.click());
   dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
   $('#changeFile').addEventListener('click', () => fileInput.click());
@@ -1635,232 +1907,127 @@ svg { display: block; }
     e.preventDefault();
     if (!pendingFile) return;
     publishBtn.disabled = true;
-    publishBtn.textContent = 'Wird gespeichert …';
-    const rec = {
-      id: 'up-' + uid(),
-      blob: pendingFile,
-      name: pendingFile.name,
-      desc: $('#upDesc').value.trim(),
-      music: $('#upMusic').value.trim() || `Originalton – ${myName()}`,
-      createdAt: Date.now()
-    };
-    try {
-      if (dbAvailable) {
+    publishBtn.textContent = 'Wird gepostet …';
+    const rec = { id: 'up-' + uid(), blob: pendingFile, thumb: pendingThumb, name: pendingFile.name, desc: $('#upDesc').value.trim(), music: $('#upMusic').value.trim() || `Originalton – ${myName()}`, createdAt: Date.now() };
+    let persisted = false;
+    if (dbAvailable) {
+      try {
         await VideoDB.put(rec);
+        persisted = true;
         if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+      } catch (err) {
+        console.error(err);
+        if (err && err.name === 'QuotaExceededError') { toast('Nicht genug Speicherplatz im Browser'); publishBtn.disabled = false; publishBtn.textContent = 'Posten'; return; }
       }
-    } catch (err) {
-      console.error(err);
-      const quota = err && err.name === 'QuotaExceededError';
-      toast(quota ? 'Nicht genug Speicherplatz im Browser' : 'Speichern fehlgeschlagen – Video nur bis zum Neuladen sichtbar');
-      if (quota) { publishBtn.disabled = false; publishBtn.textContent = 'Veröffentlichen'; return; }
     }
-    if (!dbAvailable) toast('Kein dauerhafter Speicher verfügbar – Video nur bis zum Neuladen sichtbar');
-    allVideos.unshift(uploadToVideo(rec));
+    const v = uploadToVideo(rec);
+    allVideos.unshift(v);
+    indexVideos();
     hideSheet(uploadSheet);
     resetUpload();
-    filter = 'all';
-    syncTabs();
-    renderFeed(rec.id);
-    toast('Video veröffentlicht 🎉');
+    mode = 'all'; listCtx = null;
+    closePages();
+    renderFeed(v.id);
+    toast(persisted ? 'Video gepostet 🎉' : 'Gepostet, aber nur bis zum Neuladen sichtbar (kein Speicher verfügbar)');
   });
-
-  /* =========================================================
-     PROFIL
-     ========================================================= */
-  const profileSheet = $('#profileSheet');
-  const profileName = $('#profileName');
-
-  function gridItem(v, deletable) {
-    const item = el('div', 'grid-item');
-    item.dataset.id = v.id;
-    const vid = el('video');
-    vid.muted = true; vid.preload = 'metadata'; vid.playsInline = true;
-    vid.addEventListener('loadedmetadata', () => { vid.currentTime = Math.min(0.5, (vid.duration || 1) / 2); }, { once: true });
-    vid.onerror = () => vid.remove();
-    vid.src = v.sources[0];
-    const likes = el('div', 'g-likes', ICON.heartFilled);
-    const n = el('span'); n.textContent = formatCount(likeCount(v));
-    likes.append(n);
-    item.append(vid, likes);
-    if (deletable) {
-      const del = el('button', 'g-del', ICON.trash);
-      del.type = 'button';
-      del.dataset.del = v.id;
-      del.setAttribute('aria-label', 'Video löschen');
-      item.append(del);
-    }
-    return item;
-  }
-
-  async function renderProfile() {
-    paintAvatar($('#profileAvatar'), myName());
-    profileName.value = myName();
-    const mine = allVideos.filter(v => v.own);
-    const saved = allVideos.filter(v => Store.state.saves[v.id]);
-    $('#statVideos').textContent = mine.length;
-    $('#statFollowing').textContent = Object.keys(Store.state.follows).length;
-    $('#statLikes').textContent = Object.keys(Store.state.likes).length;
-
-    const myGrid = $('#myGrid'); myGrid.textContent = '';
-    if (mine.length) mine.forEach(v => myGrid.append(gridItem(v, true)));
-    else myGrid.append(el('div', 'grid-empty', 'Du hast noch keine Videos hochgeladen.<br>Tippe unten auf „+“.'));
-
-    const savedGrid = $('#savedGrid'); savedGrid.textContent = '';
-    if (saved.length) saved.forEach(v => savedGrid.append(gridItem(v, false)));
-    else savedGrid.append(el('div', 'grid-empty', 'Noch nichts gespeichert.'));
-
-    const info = $('#storageInfo');
-    info.textContent = dbAvailable ? 'Videos werden lokal in diesem Browser gespeichert (IndexedDB).' : 'IndexedDB nicht verfügbar – Uploads gehen beim Neuladen verloren.';
-    if (navigator.storage && navigator.storage.estimate) {
-      try {
-        const { usage, quota } = await navigator.storage.estimate();
-        if (quota) info.textContent += ` Belegt: ${formatBytes(usage || 0)} von ca. ${formatBytes(quota)}.`;
-      } catch (_) { /* optional */ }
-    }
-  }
-
-  function openProfile() {
-    renderProfile();
-    showSheet(profileSheet);
-    $('#navProfile').classList.add('active');
-    $('#navHome').classList.remove('active');
-  }
-  profileSheet.addEventListener('sheetclose', () => {
-    $('#navProfile').classList.remove('active');
-    $('#navHome').classList.add('active');
-    // Grid-Videos entladen
-    profileSheet.querySelectorAll('.grid-item video').forEach(v => { v.removeAttribute('src'); v.load(); });
-  });
-
-  profileName.addEventListener('change', () => {
-    const clean = profileName.value.trim().replace(/\s+/g, '_').replace(/[^\p{L}\p{N}_.]/gu, '').slice(0, 24);
-    if (!clean) { profileName.value = myName(); return; }
-    Store.state.profile.name = clean;
-    Store.save();
-    profileName.value = clean;
-    paintAvatar($('#profileAvatar'), clean);
-    allVideos.forEach(v => { if (v.own) { v.user = clean; if (v.music.startsWith('Originalton – ')) v.music = `Originalton – ${clean}`; } });
-    toast('Name gespeichert');
-    const currentId = visibleVideos[activeIndex] && visibleVideos[activeIndex].id;
-    renderFeed(currentId);
-  });
-  profileName.addEventListener('keydown', e => { if (e.key === 'Enter') profileName.blur(); });
 
   async function deleteUpload(id) {
     if (!(await confirmDialog('Dieses Video endgültig von diesem Gerät löschen?'))) return;
-    try { if (dbAvailable) await VideoDB.remove(id); }
-    catch (err) { console.error(err); toast('Löschen fehlgeschlagen'); return; }
-    const url = objectUrls.get(id);
+    try { if (dbAvailable) await VideoDB.remove(id); } catch (err) { console.error(err); toast('Löschen hat nicht geklappt'); return; }
     allVideos = allVideos.filter(v => v.id !== id);
-    delete Store.state.likes[id]; delete Store.state.saves[id]; delete Store.state.comments[id]; delete Store.state.shares[id];
+    indexVideos();
+    ['likes', 'saves', 'comments', 'shares', 'views'].forEach(k => delete S()[k][id]);
     Store.save();
-    const currentId = visibleVideos[activeIndex] && visibleVideos[activeIndex].id;
-    renderFeed(currentId === id ? undefined : currentId);
-    if (url) { URL.revokeObjectURL(url); objectUrls.delete(id); }
-    renderProfile();
+    if (mode === 'list') listCtx.ids = listCtx.ids.filter(x => x !== id);
+    const cur = feedItems[activeIndex] && feedItems[activeIndex].v.id;
+    renderFeed(cur === id ? undefined : cur);
+    [id, id + ':thumb'].forEach(k => { const u = objectUrls.get(k); if (u) { URL.revokeObjectURL(u); objectUrls.delete(k); } });
+    if (mePage.classList.contains('open')) renderMe();
     toast('Video gelöscht');
   }
 
-  profileSheet.addEventListener('click', e => {
-    const del = e.target.closest('.g-del');
-    if (del) { e.stopPropagation(); deleteUpload(del.dataset.del); return; }
-    const item = e.target.closest('.grid-item');
-    if (item) {
-      hideSheet(profileSheet);
-      if (filter !== 'all') { filter = 'all'; syncTabs(); renderFeed(item.dataset.id); return; }
-      const idx = visibleVideos.findIndex(v => v.id === item.dataset.id);
-      if (idx >= 0) scrollToIndex(idx);
-    }
-  });
-
   $('#resetBtn').addEventListener('click', async () => {
-    if (!(await confirmDialog('Alle Likes, Kommentare, Follows und hochgeladenen Videos löschen?', 'Alles löschen'))) return;
+    if (!(await confirmDialog('Alle Likes, Kommentare, Follows und deine hochgeladenen Videos löschen?', 'Alles löschen'))) return;
     try { if (dbAvailable) await VideoDB.clear(); } catch (err) { console.error(err); }
     Store.clear();
-    objectUrls.forEach(u => URL.revokeObjectURL(u));
-    objectUrls.clear();
     location.reload();
   });
 
-  /* =========================================================
-     NAVIGATION, TABS, TASTATUR
-     ========================================================= */
-  function syncTabs() {
-    document.querySelectorAll('.tab').forEach(t => {
-      const on = t.dataset.filter === filter;
-      t.classList.toggle('active', on);
-      t.setAttribute('aria-selected', on);
-    });
-  }
-  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
-    if (t.dataset.filter === filter) return;
-    filter = t.dataset.filter;
-    syncTabs();
-    renderFeed();
+  /* ================= Navigation & Tastatur ================= */
+  $$('.tab').forEach(t => t.addEventListener('click', () => {
+    if (t.dataset.mode === mode) return;
+    mode = t.dataset.mode;
+    renderFeed(mode === 'all' ? lastAllId : undefined);
   }));
-
-  $('#muteBtn').addEventListener('click', () => toggleMute());
-  $('#navUpload').addEventListener('click', openUpload);
-  $('#navProfile').addEventListener('click', openProfile);
-  $('#navHome').addEventListener('click', () => {
-    hideSheet();
-    if (activeIndex > 0) scrollToIndex(0);
-  });
+  $('#muteBtn').addEventListener('click', () => { if (mode === 'list') leaveList(); else toggleMute(); });
+  $('#unmutePill').addEventListener('click', () => toggleMute());
+  $('#topRightBtn').addEventListener('click', () => { if (mode !== 'list') openPage(discoverPage); });
+  $$('[data-nav]').forEach(b => b.addEventListener('click', () => {
+    const n = b.dataset.nav;
+    if (n === 'upload') return openUpload();
+    if (n === 'discover') return openPage(discoverPage);
+    if (n === 'me') return openPage(mePage);
+    const wasOnPage = !!$('.page.open');
+    closePages();
+    if (mode !== 'all') { mode = 'all'; listCtx = null; renderFeed(lastAllId); }
+    else if (!wasOnPage && activeIndex > 0) scrollToIndex(0);
+  }));
   $('#prevBtn').addEventListener('click', () => scrollToIndex(activeIndex - 1));
   $('#nextBtn').addEventListener('click', () => scrollToIndex(activeIndex + 1));
 
   document.addEventListener('keydown', e => {
     if ($('#confirm').classList.contains('open')) { if (e.key === 'Escape') $('#confirmNo').click(); return; }
-    if (e.key === 'Escape' && openSheet) { hideSheet(); return; }
+    if (e.key === 'Escape') { if (openSheet) hideSheet(); else if (!closeTopPage() && mode === 'list') leaveList(); return; }
     const tag = (e.target.tagName || '').toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || openSheet || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (tag === 'input' || tag === 'textarea' || openSheet || $('.page.open') || e.metaKey || e.ctrlKey || e.altKey) return;
     const s = slides[activeIndex];
+    const v = feedItems[activeIndex] && feedItems[activeIndex].v;
     switch (e.key) {
       case 'ArrowDown': case 'PageDown': case 'j': e.preventDefault(); scrollToIndex(activeIndex + 1); break;
       case 'ArrowUp': case 'PageUp': case 'k': e.preventDefault(); scrollToIndex(activeIndex - 1); break;
       case ' ': e.preventDefault(); togglePause(); break;
       case 'm': case 'M': toggleMute(); break;
-      case 'l': case 'L': if (s) toggleLike(s, visibleVideos[activeIndex]); break;
-      case 'c': case 'C': if (s) openComments(visibleVideos[activeIndex], s); break;
-      case 'ArrowRight': if (s) { const v = $('video', s); v.currentTime = Math.min(v.duration || 0, v.currentTime + 5); } break;
-      case 'ArrowLeft': if (s) { const v = $('video', s); v.currentTime = Math.max(0, v.currentTime - 5); } break;
+      case 'l': case 'L': if (v) toggleLike(v); break;
+      case 'c': case 'C': if (v) openComments(v); break;
+      case 'ArrowRight': if (s) { const vid = $('video', s); vid.currentTime = Math.min(vid.duration || 0, vid.currentTime + 5); } break;
+      case 'ArrowLeft': if (s) { const vid = $('video', s); vid.currentTime = Math.max(0, vid.currentTime - 5); } break;
     }
   });
 
-  // Im Hintergrund pausieren, beim Zurückkehren fortsetzen.
-  document.addEventListener('visibilitychange', () => {
-    const s = slides[activeIndex];
-    if (!s) return;
-    const v = $('video', s);
-    if (document.hidden) { v.pause(); cancelAnimationFrame(rafId); }
-    else if (!s.classList.contains('paused') && openSheet !== uploadSheet) { safePlay(v, s); startProgressLoop(); }
-  });
-
-  // Nach Größenänderung (z. B. Drehen) am aktiven Video einrasten.
+  document.addEventListener('visibilitychange', () => { syncPlayback(); if (document.hidden) cancelAnimationFrame(rafId); else startProgressLoop(); });
   let resizeTimer = 0;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => { if (activeIndex >= 0) scrollToIndex(activeIndex, false); }, 120);
+    resizeTimer = setTimeout(() => {
+      if (activeIndex >= 0) scrollToIndex(activeIndex, false);
+      if (slides[activeIndex]) updateMoreButton(slides[activeIndex]);
+    }, 120);
   });
 
-  /* =========================================================
-     START
-     ========================================================= */
+  /* ================= Start ================= */
+  let splashDone = false;
+  function hideSplash() {
+    if (splashDone) return;
+    splashDone = true;
+    setTimeout(() => $('#splash').classList.add('gone'), Math.max(0, 700 - performance.now()));
+  }
+  setTimeout(hideSplash, 2500);
+
   async function init() {
     Store.load();
+    $('#unmutePill').innerHTML = `${ICON.soundOff}<span>Tippe für Ton</span>`;
     applyMute(false);
     let uploads = [];
     dbAvailable = await VideoDB.available();
     if (dbAvailable) {
       try { uploads = (await VideoDB.getAll()) || []; }
-      catch (err) { console.error(err); toast('Gespeicherte Videos konnten nicht geladen werden'); }
+      catch (err) { console.error(err); toast('Deine Videos konnten nicht geladen werden'); }
     }
     uploads.sort((a, b) => b.createdAt - a.createdAt);
     allVideos = [...uploads.map(uploadToVideo), ...SEED_VIDEOS];
+    indexVideos();
     renderFeed();
   }
-
   init();
 })();
 </script>
